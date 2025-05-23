@@ -13,7 +13,8 @@ const router = express.Router();
 router.post("/register", async (req, res) => {
     try {
         const { name, email, password, profileImageUrl } = req.body;
-        console.log(name);
+        console.log(req.body);
+
 
 
         const userexit = await User.findOne({ email });
@@ -85,6 +86,26 @@ router.post("/login", async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 });
+
+router.post('/ForgetPassword', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const users = await User.find({ email });
+
+        if (users.length === 0) {
+            return res.status(404).json({ message: "Email is not registered" });
+        }
+
+        console.log(users);
+
+        return res.status(200).json({ message: "Email exists", user: users[0] });
+
+    } catch (error) {
+        console.error("Error in /ForgetPassword:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
 
 router.get("/profile", Protect, async (req, res) => {
     try {

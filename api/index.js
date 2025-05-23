@@ -6,6 +6,8 @@ import ConnectDb from "./Database.js"
 import User from "./models/user.model.js"
 
 import AuthRoutes from "./routes/AuthRoutes.js"
+import cors from "cors"
+
 
 
 const app = express()
@@ -17,6 +19,10 @@ const MongoURL = process.env.MONGO;
 ConnectDb(MongoURL)
 
 app.use(express.json());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
 
 
 
@@ -26,13 +32,13 @@ app.use("/api/Auth", AuthRoutes)
 app.get("/", async (req, res) => {
   try {
     const user = await User.find();
-    console.log(user);
-
+    res.send(user)
   } catch (error) {
     console.log("error", error);
 
   }
-})
+});
+
 
 app.listen(port, () => {
   console.log("App Listening at Port 3000");
