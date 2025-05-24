@@ -7,8 +7,7 @@ import User from "./models/user.model.js"
 
 import AuthRoutes from "./routes/AuthRoutes.js"
 import cors from "cors"
-
-
+import cookieParser from "cookie-parser"
 
 const app = express()
 dotenv.config()
@@ -23,6 +22,7 @@ app.use(cors({
   origin: "http://localhost:5173",
   credentials: true
 }));
+app.use(cookieParser());
 
 
 
