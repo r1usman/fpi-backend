@@ -155,7 +155,7 @@ router.post('/ForgetPassword', async (req, res) => {
         console.log(users);
 
 
-        if (users.length === 0) {
+        if (!users) {
             return res.status(400).json({ message: "Email is not registered" });
         }
         console.log(users);
