@@ -11,9 +11,11 @@ import {
   VerifyPassRecoveryToken,
 } from "../utils/PasswordResetToken.js";
 import { MailTemplateOTP } from "../utils/MailTemplate.js";
+import { google, updateUser } from "../controllers/auth.controller.js";
 const router = express.Router();
 
 router.post("/google", google);
+router.post("/update/:id", updateUser);
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password, profileImageUrl } = req.body;
