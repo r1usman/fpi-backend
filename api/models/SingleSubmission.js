@@ -1,5 +1,5 @@
 // models/SingleSubmission.js
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 const singleSubmissionSchema = new mongoose.Schema({
   // (1) what to get from user

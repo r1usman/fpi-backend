@@ -6,7 +6,20 @@ const UserScheme = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     profileImage: { type: String, default: null },
-    role: { type: String, enum: ["admin", "member"], default: "member" },
+
+    status: {
+        type: String,
+        required: true,
+        enum: ['Admin', "Student", "Instructor"],
+        default: "Student"
+    },
+
+    submissions: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'SingleSubmission'
+        }
+    ],
   },
   {
     timestamps: true,

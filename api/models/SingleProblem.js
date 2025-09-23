@@ -1,5 +1,5 @@
 // models/SingleProblem.js
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 const exampleSchema = new mongoose.Schema({
   input: String,

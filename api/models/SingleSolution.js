@@ -1,5 +1,5 @@
 // models/SingleSolution.js
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 const singleSolutionSchema = new mongoose.Schema({
   problem: {
