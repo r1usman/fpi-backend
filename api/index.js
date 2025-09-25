@@ -13,7 +13,11 @@ const app = express();
 dotenv.config();
 
 const port = process.env.Port;
+console.log('Port', port);
+
 const MongoURL = process.env.MONGO;
+console.log("MongoURL", MongoURL);
+
 
 ConnectDb(MongoURL);
 
@@ -26,7 +30,7 @@ app.use(
 );
 app.use(cookieParser());
 
-app.use("/api/Auth", AuthRoutes);
+app.use("/Auth", AuthRoutes);
 
 app.get("/", async (req, res) => {
   try {

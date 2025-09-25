@@ -18,22 +18,20 @@ router.post("/google", google);
 router.post("/update/:id", updateUser);
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, profileImageUrl } = req.body;
-    console.log(req.body);
-
+    const { name, email, password, profileImageUrl, role } = req.body;
     const userexit = await User.findOne({ email });
     if (userexit) {
       return res.status(400).json({ Message: "Email already Registered..." });
     }
-    const role = "member";
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(password, salt);
+
     const user = await User.create({
       name,
       email,
       password: hashPassword,
       profileImage: profileImageUrl,
-      role: role,
+      status: role,
     });
     console.log(user);
 
@@ -85,6 +83,7 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
 
 router.post("/OtpGenerator", async (req, res) => {
   try {
@@ -226,7 +225,7 @@ router.get("/profile", Protect, async (req, res) => {
   }
 });
 
-router.post("/profile", () => {});
+
 
 router.post("/TokenExtract", (req, res) => {
   try {
@@ -265,9 +264,8 @@ router.post("/uploadImg", upload.single("image"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "No File is Uploaded" });
   }
-  const ImageUrl = `${req.protocol}://${req.get("host")}/uploads/${
-    req.file.filename
-  }`;
+  const ImageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename
+    }`;
   return res
     .status(200)
     .json({ message: "Image uploaded successfully", Image: ImageUrl });
@@ -280,6 +278,7 @@ router.post("/VerifyEmail", async (req, res) => {
     console.log(isExist.length);
 
     if (isExist.length > 0) {
+
       return res
         .status(400)
         .json({ Message: "Email Already Exist", isExist: true });
