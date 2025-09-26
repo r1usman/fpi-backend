@@ -8,16 +8,16 @@ import User from "./models/user.model.js";
 import AuthRoutes from "./routes/AuthRoutes.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { courseRouter } from "./routes/courseRoutes.js";
 
 const app = express();
 dotenv.config();
 
 const port = process.env.Port;
-console.log('Port', port);
+console.log("Port", port);
 
 const MongoURL = process.env.MONGO;
 console.log("MongoURL", MongoURL);
-
 
 ConnectDb(MongoURL);
 
@@ -31,6 +31,7 @@ app.use(
 app.use(cookieParser());
 
 app.use("/Auth", AuthRoutes);
+app.use("/courses", courseRouter);
 
 app.get("/", async (req, res) => {
   try {

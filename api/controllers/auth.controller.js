@@ -38,7 +38,6 @@ export const google = async (req, res, next) => {
       await newUser.save();
       const payload = { User: newUser };
       const token = GenerateToken(payload);
-      console.log(token);
 
       res.cookie("FreashToken", token, {
         httpOnly: true,

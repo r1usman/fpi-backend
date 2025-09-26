@@ -1,21 +1,19 @@
-const Problem = require('../Models/SingleProblem');
-const Solution = require('../Models/SingleSolution');
+const Problem = require("../Models/SingleProblem");
+const Solution = require("../Models/SingleSolution");
 
 exports.getAllProblems = async (req, res) => {
-    const problems = await Problem.find();
-    console.log('hello');
-    res.json(problems);
-}
+  const problems = await Problem.find();
+  res.json(problems);
+};
 
 exports.getProblemById = async (req, res) => {
-    try{
-        const prob = await Problem.findById(req.params.id).populate('solutions');
-        res.json(prob);
-    }
-    catch(err){
-        res.json({ error: err.message })
-    }
-}
+  try {
+    const prob = await Problem.findById(req.params.id).populate("solutions");
+    res.json(prob);
+  } catch (err) {
+    res.json({ error: err.message });
+  }
+};
 
 // Add problem
 exports.createProblem = async (req, res) => {
@@ -42,7 +40,7 @@ exports.addSolution = async (req, res) => {
       problem: id,
       code,
       language,
-      solutionNumber
+      solutionNumber,
     });
 
     problem.solutions.push(solution._id);
@@ -126,7 +124,7 @@ exports.deleteSolution = async (req, res) => {
 
     // Also remove reference from Problem.solutions
     await Problem.findByIdAndUpdate(solution.problem, {
-      $pull: { solutions: id }
+      $pull: { solutions: id },
     });
 
     res.json({ message: "Solution deleted successfully" });
