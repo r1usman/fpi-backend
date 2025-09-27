@@ -27,9 +27,7 @@ async function createCourse(req, res) {
 
 async function getCourse(req, res) {
   try {
-    const course = await Course.findById(req.params.courseId).populate(
-      "studentIds"
-    );
+    const course = await Course.findById(req.params.courseId)
     if (!course) return res.status(404).json({ error: "Course not found" });
     res.json(course);
   } catch (err) {
@@ -72,6 +70,7 @@ async function addStudentToCourse(req, res) {
 
 async function joinCourse(req, res) {
   try {
+    console.log(req.body);
     const { studentId } = req.body;
     if (!studentId)
       return res
