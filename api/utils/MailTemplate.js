@@ -1,13 +1,13 @@
-export const MailTemplateOTP = (email, otp) => {
-    return {
-        from: {
-            name: "Ali",
-            address: "alishah19477.as@gmail.com",
-        },
-        to: email,
-        subject: 'Your OTP Code for Account Verification',
-        text: `Hello Ali,\n\nYour OTP code is: ${otp}\n\nPlease enter this code to verify your account. If you did not request this, please ignore this message.`,
-        html: `<!DOCTYPE html>
+exports.MailTemplateOTP = (email, otp) => {
+  return {
+    from: {
+      name: "Ali",
+      address: "alishah19477.as@gmail.com",
+    },
+    to: email,
+    subject: "Your OTP Code for Account Verification",
+    text: `Hello Ali,\n\nYour OTP code is: ${otp}\n\nPlease enter this code to verify your account. If you did not request this, please ignore this message.`,
+    html: `<!DOCTYPE html>
             <html><head><meta charset="UTF-8"><style>
                 body { font-family: Arial; background: #f4f4f4; padding: 20px; }
                 .container { background: white; padding: 20px; border-radius: 8px; }
@@ -21,6 +21,5 @@ export const MailTemplateOTP = (email, otp) => {
                     <p style="font-size:0.8em;color:#777;">This is an automated message. Please do not reply.</p>
                 </div>
             </body></html>`,
-    };
-}
-
+  };
+};

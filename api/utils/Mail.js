@@ -1,14 +1,13 @@
-
-import nodemailer from "nodemailer"
-export const transporter = nodemailer.createTransport({
-    Service: "email",
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true, // true for port 465, false for other ports
-    auth: {
-        user: "alishah19477.as@gmail.com", // your Gmail account
-        pass: "xguwsazrpqqtielp", // App Password (not your regular Gmail password)
-    }
+const nodemailer = require("nodemailer");
+exports.transporter = nodemailer.createTransport({
+  Service: "email",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true, // true for port 465, false for other ports
+  auth: {
+    user: "alishah19477.as@gmail.com", // your Gmail account
+    pass: "xguwsazrpqqtielp", // App Password (not your regular Gmail password)
+  },
 });
 
 // var mailOptions = {
@@ -69,23 +68,15 @@ export const transporter = nodemailer.createTransport({
 //     `
 // };
 
-
-
 // const shouldSendEmail = false;
-export const SendMail = async (transporter, mailOptions) => {
-
-
-    try {
-        const info = await transporter.sendMail(mailOptions);
-        console.log("Email sent successfully:", info.response);
-    } catch (error) {
-        console.log("Error sending email:", error);
-    }
+exports.SendMail = async (transporter, mailOptions) => {
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully:", info.response);
+  } catch (error) {
+    console.log("Error sending email:", error);
+  }
 };
 // SendMail(transporter, mailOptions)
 
 // module.exports = { transporter, mailOptions, SendMail }
-
-
-
-

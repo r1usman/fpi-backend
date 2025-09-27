@@ -1,5 +1,5 @@
-const Problem = require("../Models/SingleProblem");
-const Solution = require("../Models/SingleSolution");
+const Problem = require("../models/SingleProblem");
+const Solution = require("../models/SingleSolution");
 
 exports.getAllProblems = async (req, res) => {
   const problems = await Problem.find();

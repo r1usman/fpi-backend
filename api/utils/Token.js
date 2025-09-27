@@ -28,7 +28,6 @@ const Protect = (req, res, next) => {
     try {
         const decoded = jwt.verify(token, Key);
         const user = decoded.User;
-        console.log(user);
 
         req.user = user;
         next();

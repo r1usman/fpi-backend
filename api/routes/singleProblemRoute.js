@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const problemController = require('../controllers/singleProblemController');
 
-const { Protect } = require('../Middleware/Token_Middleware');
-const { adminAccess } = require('../Middleware/adminAccess');
+const { Protect } = require('../Middleware/AuthMiddleware');
+const { adminAccess } = require('../Middleware/AdminAccess');
 
 // curl -X GET http://localhost:5000/api/problems
 router.get('/', problemController.getAllProblems);

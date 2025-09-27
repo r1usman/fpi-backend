@@ -1,6 +1,6 @@
-const User = require('../Models/User_Model');
-const Problem = require('../Models/SingleProblem');
-const Submission = require('../Models/SingleSubmission')
+const User = require('../models/user.model');
+const Problem = require('../models/SingleProblem');
+const Submission = require('../models/SingleSubmission')
 const axios = require('axios');
 
 exports.createSubmission = async (req, res) => {

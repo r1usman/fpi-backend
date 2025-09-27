@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const submissionController = require('../controllers/singleSubmissionController');
-const { Protect } = require('../Middleware/Token_Middleware');
+const { Protect } = require('../Middleware/AuthMiddleware');
 
 /*
 curl -X POST http://localhost:5000/api/submissions \
