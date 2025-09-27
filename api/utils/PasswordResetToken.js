@@ -1,23 +1,23 @@
-import jwt from "jsonwebtoken"
-import dotenv from "dotenv"
+const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
 
-dotenv.config()
+dotenv.config();
 
-const Key = process.env.PassRecoverKey
+const Key = process.env.PassRecoverKey;
 
-export const GeneratePassRecoveryToken = (payload) => {
-    return jwt.sign(payload, Key, { expiresIn: '1h' })
-}
-export const VerifyPassRecoveryToken = (Token) => {
+const GeneratePassRecoveryToken = (payload) => {
+    return jwt.sign(payload, Key, { expiresIn: "1h" });
+};
+
+const VerifyPassRecoveryToken = (Token) => {
     return jwt.verify(Token, Key);
-}
+};
 
-export const PassRecoveryMiddleware = (req, res, next) => {
+const PassRecoveryMiddleware = (req, res, next) => {
     console.log("In protect");
 
     let token = req.headers.authorization?.split(" ")[1];
     console.log("Token from header", token);
-
 
     if (!token) {
         token = req.cookies.PasswordRecovery;
@@ -30,19 +30,19 @@ export const PassRecoveryMiddleware = (req, res, next) => {
 
     try {
         const decoded = VerifyPassRecoveryToken(token);
-        console.log(decoded);
-
-        // const user = decoded.User;
-        // console.log(user);
-
         console.log(decoded, "decoded");
 
+        // If needed, attach decoded data to request
+        // req.user = decoded;
 
-        // req.user = user;
-
-        // req.user = decoded;  // Store user data in request
         next();
     } catch (error) {
         return res.status(403).json({ Message: "Invalid Token", error });
     }
-}
+};
+
+module.exports = {
+    GeneratePassRecoveryToken,
+    VerifyPassRecoveryToken,
+    PassRecoveryMiddleware,
+};

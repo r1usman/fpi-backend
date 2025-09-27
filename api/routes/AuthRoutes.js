@@ -1,21 +1,24 @@
-import express from "express";
-import User from "../models/user.model.js";
-import bcrypt from "bcryptjs";
-import { GenerateToken, VerifyToken, Protect } from "../utils/Token.js";
-import upload from "../Middleware/uploadMiddleware.js";
-import { transporter, SendMail } from "../utils/Mail.js";
-import otpGenerator from "otp-generator";
-import {
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const otpGenerator = require("otp-generator");
+
+const User = require("../models/user.model");
+const { GenerateToken, VerifyToken, Protect } = require("../utils/Token");
+const upload = require("../Middleware/uploadMiddleware");
+const { transporter, SendMail } = require("../utils/Mail");
+const {
   GeneratePassRecoveryToken,
   PassRecoveryMiddleware,
   VerifyPassRecoveryToken,
-} from "../utils/PasswordResetToken.js";
-import { MailTemplateOTP } from "../utils/MailTemplate.js";
-import { google, updateUser } from "../controllers/auth.controller.js";
+} = require("../utils/PasswordResetToken");
+const { MailTemplateOTP } = require("../utils/MailTemplate");
+const { google, updateUser } = require("../controllers/auth.controller");
+
 const router = express.Router();
 
 router.post("/google", google);
 router.post("/update/:id", updateUser);
+
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password, profileImageUrl, role } = req.body;
@@ -33,7 +36,6 @@ router.post("/register", async (req, res) => {
       profileImage: profileImageUrl,
       status: role,
     });
-    console.log(user);
 
     if (user) {
       return res
@@ -44,7 +46,6 @@ router.post("/register", async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-
     res.status(404).json({ error: error });
   }
 });
@@ -65,7 +66,6 @@ router.post("/login", async (req, res) => {
 
     const payload = { User: checkUser };
     const token = GenerateToken(payload);
-    console.log(token);
 
     res.cookie("FreashToken", token, {
       httpOnly: true,
@@ -84,7 +84,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-
 router.post("/OtpGenerator", async (req, res) => {
   try {
     const { email } = req.body;
@@ -99,14 +98,12 @@ router.post("/OtpGenerator", async (req, res) => {
       specialChars: false,
     });
 
-    // Store OTP in cookie securely
     res.cookie("OTP", otp, {
       httpOnly: true,
       maxAge: 5 * 60 * 1000,
     });
 
     const mailOptions = MailTemplateOTP(email, otp);
-
     await SendMail(transporter, mailOptions);
     res.json({ Message: "Email Sended", OTP: otp });
   } catch (error) {
@@ -118,22 +115,13 @@ router.post("/OtpGenerator", async (req, res) => {
 router.post("/ForgetPassword", async (req, res) => {
   try {
     const { email } = req.body;
-    console.log(email);
-
     const users = await User.findOne({ email });
-    console.log(users);
 
     if (!users) {
       return res.status(400).json({ message: "Email is not registered" });
     }
-    console.log(users);
 
-    const Payload = {
-      name: users.name,
-      email: users.email,
-    };
-    console.log(Payload);
-
+    const Payload = { name: users.name, email: users.email };
     const Token = GeneratePassRecoveryToken(Payload);
 
     res.cookie("PasswordRecovery", Token, {
@@ -145,61 +133,17 @@ router.post("/ForgetPassword", async (req, res) => {
 
     const resetLink = `http://localhost:5173/ChangePassword?token=${Token}`;
 
-    var mailOptions = {
-      from: {
-        name: "CodeAscend",
-        address: "alishah19477.as@gmail.com",
-      },
+    const mailOptions = {
+      from: { name: "CodeAscend", address: "alishah19477.as@gmail.com" },
       to: email,
       subject: "Forget Password Request",
-      text: `Hello ${users.name},\n\nWe hope this email finds you well. This is a sample email template that you can use to send messages to your contacts.\n\nFeel free to customize this template to fit your needs. You can add more sections, links, or images as needed.\n\nBest regards,\nYour Name\n\nThis is an automated message. Please do not reply directly to this email.`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Email Template</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    color: #333;
-                    margin: 0;
-                    padding: 20px;
-                    background-color: #f4f4f4;
-                }
-                .container {
-                    max-width: 600px;
-                    margin: auto;
-                    background: #fff;
-                    padding: 20px;
-                    border-radius: 8px;
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                }
-                h1 {
-                    color: #333;
-                }
-                p {
-                    line-height: 1.6;
-                }
-                .footer {
-                    margin-top: 20px;
-                    font-size: 0.8em;
-                    color: #777;
-                }
-            </style>
-        </head>
-        <body>
-            <h1>Hello From CodeAscend,</h1>
-            <p>Click on the link to reset your password: <a href="${resetLink}">Reset Password</a></p>
-            <p>This is an automated message. Please do not reply directly to this email.</p>
-        </body>
-        </html>
-        `,
+      html: `<p>Click here to reset your password: <a href="${resetLink}">Reset Password</a></p>`,
     };
-    SendMail(transporter, mailOptions);
+
+    await SendMail(transporter, mailOptions);
     return res.status(200).json({
       message:
-        "we've sent you a link to reset your password. Please check your inbox (and spam folder just in case)!",
+        "we've sent you a link to reset your password. Please check your inbox!",
       user: users,
       Token,
     });
@@ -215,17 +159,12 @@ router.get("/profile", Protect, async (req, res) => {
     if (!UserProfile) {
       res.status(404).json({ message: "User Not Found" });
     }
-    console.log(UserProfile);
 
     res.json({ user: UserProfile });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: error.message });
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 });
-
-
 
 router.post("/TokenExtract", (req, res) => {
   try {
@@ -243,7 +182,6 @@ router.post("/TokenExtract", (req, res) => {
 router.post("/ChangePassword", async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const user = await User.findOne({ email });
 
     const salt = await bcrypt.genSalt(10);
@@ -254,9 +192,7 @@ router.post("/ChangePassword", async (req, res) => {
 
     res.send({ message: "Password Changed", redirect: true });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: error.message });
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 });
 
@@ -264,24 +200,17 @@ router.post("/uploadImg", upload.single("image"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "No File is Uploaded" });
   }
-  const ImageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename
-    }`;
-  return res
-    .status(200)
-    .json({ message: "Image uploaded successfully", Image: ImageUrl });
+  const ImageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+  return res.status(200).json({ message: "Image uploaded successfully", Image: ImageUrl });
 });
 
 router.post("/VerifyEmail", async (req, res) => {
   try {
     const { email } = req.body;
     const isExist = await User.find({ email });
-    console.log(isExist.length);
 
     if (isExist.length > 0) {
-
-      return res
-        .status(400)
-        .json({ Message: "Email Already Exist", isExist: true });
+      return res.status(400).json({ Message: "Email Already Exist", isExist: true });
     }
     res.json({ Message: "Unique Email", isExist: false });
   } catch (error) {
@@ -289,4 +218,4 @@ router.post("/VerifyEmail", async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

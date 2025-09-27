@@ -1,10 +1,10 @@
-import User from "../models/user.model.js";
-import bcryptjs from "bcryptjs";
-import { errorHandler } from "../utils/error.js";
-import jwt from "jsonwebtoken";
-import { GenerateToken } from "../utils/Token.js";
+const User = require("../models/user.model.js");
+const bcryptjs = require("bcryptjs");
+const { errorHandler } = require("../utils/error.js");
+const jwt = require("jsonwebtoken");
+const { GenerateToken } = require("../utils/Token.js");
 
-export const google = async (req, res, next) => {
+const google = async (req, res, next) => {
   try {
     const user = await User.findOne({ email: req.body.email });
     if (user) {
@@ -47,7 +47,7 @@ export const google = async (req, res, next) => {
       });
       return res.status(200).json({
         message: "Authorized",
-        user: user,
+        user: newUser,
         token: token,
       });
     }
@@ -56,7 +56,7 @@ export const google = async (req, res, next) => {
   }
 };
 
-export const signOut = async (req, res, next) => {
+const signOut = async (req, res, next) => {
   try {
     res.clearCookie("access_token");
     res.status(200).json("User has been logged out!");
@@ -65,7 +65,7 @@ export const signOut = async (req, res, next) => {
   }
 };
 
-export const updateUser = async (req, res, next) => {
+const updateUser = async (req, res, next) => {
   try {
     if (req.body.password) {
       req.body.password = bcryptjs.hashSync(req.body.password, 10);
@@ -90,4 +90,10 @@ export const updateUser = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+module.exports = {
+  google,
+  signOut,
+  updateUser,
 };

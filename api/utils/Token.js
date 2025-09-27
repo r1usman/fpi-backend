@@ -1,16 +1,18 @@
-import jwt from "jsonwebtoken"
-import dotenv from "dotenv"
+const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
 dotenv.config();
-const Key = process.env.JWT_SECRET
-export const GenerateToken = (Payload) => {
-    return jwt.sign(Payload, Key, { expiresIn: "7D" });
-}
 
-export const VerifyToken = (Token) => {
+const Key = process.env.JWT_SECRET;
+
+const GenerateToken = (Payload) => {
+    return jwt.sign(Payload, Key, { expiresIn: "7d" });
+};
+
+const VerifyToken = (Token) => {
     return jwt.verify(Token, Key);
-}
+};
 
-export const Protect = (req, res, next) => {
+const Protect = (req, res, next) => {
     console.log("In protect");
 
     let token = req.headers.authorization?.split(" ")[1];
@@ -35,4 +37,8 @@ export const Protect = (req, res, next) => {
     }
 };
 
-
+module.exports = {
+    GenerateToken,
+    VerifyToken,
+    Protect,
+};

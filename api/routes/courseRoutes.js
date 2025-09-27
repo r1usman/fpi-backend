@@ -1,14 +1,14 @@
-import { Router } from "express";
-import {
+const express = require("express");
+const {
   addStudentToCourse,
   createCourse,
   getCourse,
   joinCourse,
   listCourses,
   listStudents,
-} from "../controllers/courseController.js";
+} = require("../controllers/courseController");
 
-const courseRouter = Router();
+const courseRouter = express.Router();
 
 courseRouter.post("/", createCourse);
 courseRouter.get("/", listCourses);
@@ -17,4 +17,4 @@ courseRouter.get("/:courseId", getCourse);
 courseRouter.post("/:courseId/add-student", addStudentToCourse);
 courseRouter.post("/:courseId/join", joinCourse);
 
-export { courseRouter };
+module.exports = { courseRouter };

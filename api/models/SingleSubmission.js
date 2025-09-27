@@ -1,6 +1,5 @@
 // models/SingleSubmission.js
-import mongoose from "mongoose";
-
+const mongoose = require("mongoose");
 const singleSubmissionSchema = new mongoose.Schema({
   // (1) what to get from user
   language: { type: String, required: true },
@@ -9,10 +8,10 @@ const singleSubmissionSchema = new mongoose.Schema({
   note: { type: String },
 
   // (2) what is the response of PISTON-API
-  status: { 
-    type: String, 
-    enum: ["accepted", "rejected"], 
-    default: "rejected" 
+  status: {
+    type: String,
+    enum: ["accepted", "rejected"],
+    default: "rejected"
   },
   executionTime: { type: Number },
 

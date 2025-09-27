@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
-const UserScheme = new mongoose.Schema(
+const UserSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -8,17 +8,17 @@ const UserScheme = new mongoose.Schema(
     profileImage: { type: String, default: null },
 
     status: {
-        type: String,
-        required: true,
-        enum: ['Admin', "Student", "Instructor"],
-        default: "Student"
+      type: String,
+      required: true,
+      enum: ["Admin", "Student", "Instructor"],
+      default: "Student",
     },
 
     submissions: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'SingleSubmission'
-        }
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "SingleSubmission",
+      },
     ],
   },
   {
@@ -26,6 +26,6 @@ const UserScheme = new mongoose.Schema(
   }
 );
 
-const User = mongoose.model("User", UserScheme);
+const User = mongoose.model("User", UserSchema);
 
-export default User;
+module.exports = User;

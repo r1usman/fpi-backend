@@ -1,19 +1,18 @@
-import express from "express";
-import dotenv from "dotenv";
+const express = require("express");
+const dotenv = require("dotenv");
+const path = require("path");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
-import ConnectDb from "./Database.js";
-
-import User from "./models/user.model.js";
-
-import AuthRoutes from "./routes/AuthRoutes.js";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import { courseRouter } from "./routes/courseRoutes.js";
+const ConnectDb = require("./Database.js");
+const User = require("./models/user.model.js");
+const AuthRoutes = require("./routes/AuthRoutes.js");
+const { courseRouter } = require("./routes/courseRoutes.js");
 
 const app = express();
 dotenv.config();
 
-const port = process.env.Port;
+const port = process.env.Port || 3000;
 console.log("Port", port);
 
 const MongoURL = process.env.MONGO;
@@ -28,7 +27,14 @@ app.use(
     credentials: true,
   })
 );
-app.use(cookieParser());
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"), {
+    setHeaders: (res, path) => {
+      res.set("Access-Control-Allow-Origin", "http://localhost:5173");
+    },
+  })
+);
 
 app.use("/Auth", AuthRoutes);
 app.use("/courses", courseRouter);
@@ -42,6 +48,6 @@ app.get("/", async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log("App Listening at Port 3000");
+app.listen(port, () => {
+  console.log(`App Listening at Port ${port}`);
 });

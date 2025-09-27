@@ -1,5 +1,5 @@
-import { Course } from "../models/Course.js";
-import User from "../models/user.model.js";
+const { Course } = require("../models/Course.js");
+const User = require("../models/user.model.js");
 
 async function createCourse(req, res) {
   try {
@@ -10,6 +10,7 @@ async function createCourse(req, res) {
     const instructorDoc = await User.findById(instructorId);
     if (!instructorDoc)
       return res.status(404).json({ error: "Instructor not found" });
+
     const course = await Course.create({
       title,
       instructorId,
@@ -52,10 +53,13 @@ async function addStudentToCourse(req, res) {
       return res
         .status(400)
         .json({ error: "Missing required field: studentId" });
+
     const course = await Course.findById(req.params.courseId);
     if (!course) return res.status(404).json({ error: "Course not found" });
-    const student = await Student.findById(studentId);
+
+    const student = await User.findById(studentId);
     if (!student) return res.status(404).json({ error: "Student not found" });
+
     if (!course.studentIds.find((id) => id.toString() === student.id)) {
       course.studentIds.push(student._id);
       await course.save();
@@ -73,10 +77,13 @@ async function joinCourse(req, res) {
       return res
         .status(400)
         .json({ error: "Missing required field: studentId" });
+
     const course = await Course.findById(req.params.courseId);
     if (!course) return res.status(404).json({ error: "Course not found" });
+
     const student = await User.findById(studentId);
     if (!student) return res.status(404).json({ error: "Student not found" });
+
     if (!course.studentIds.find((id) => id.toString() === student.id)) {
       course.studentIds.push(student._id);
       await course.save();
@@ -90,15 +97,17 @@ async function joinCourse(req, res) {
 async function listCoursesByInstructor(req, res) {
   try {
     const { instructorId } = req.params;
-    const instructor = await Instructor.findById(instructorId);
+    const instructor = await User.findById(instructorId);
     if (!instructor)
       return res.status(404).json({ error: "Instructor not found" });
+
     const courses = await Course.find({ instructorId });
     res.json(courses);
   } catch (err) {
     res.status(500).json({ error: "Failed to list courses for instructor" });
   }
 }
+
 async function listStudents(req, res) {
   try {
     const students = await User.find({ status: "Student" });
@@ -108,7 +117,7 @@ async function listStudents(req, res) {
   }
 }
 
-export {
+module.exports = {
   createCourse,
   getCourse,
   listCourses,

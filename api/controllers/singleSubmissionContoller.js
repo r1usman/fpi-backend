@@ -14,7 +14,7 @@ exports.createSubmission = async (req, res) => {
   let results = [];
 
   for (const tc of testcases) {
-    
+
     console.log("Testcase input: ", tc.input)
     console.log("Testcase output: ", tc.output)
 
@@ -29,8 +29,8 @@ exports.createSubmission = async (req, res) => {
               language === "java"
                 ? "Main.java"
                 : language === "python"
-                ? "main.py"
-                : "main.js",
+                  ? "main.py"
+                  : "main.js",
             content: code,
           },
         ],
@@ -119,7 +119,7 @@ show all passed testcases on screen
 // ===========================================
 
 exports.getSubmission = async (req, res) => {
-  const submissions = await Submission.find(); 
+  const submissions = await Submission.find();
   res.json(submissions);
 }
 

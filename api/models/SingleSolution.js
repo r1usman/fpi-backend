@@ -1,6 +1,5 @@
 // models/SingleSolution.js
-import mongoose from "mongoose";
-
+const mongoose = require("mongoose");
 const singleSolutionSchema = new mongoose.Schema({
   problem: {
     type: mongoose.Schema.Types.ObjectId,
