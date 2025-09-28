@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken")
 const dotenv = require("dotenv")
 dotenv.config();
-const Key = process.env.PrivateKey
+const Key = process.env.SECRET_KEY
 const GenerateToken = (Payload) => {
     return jwt.sign(Payload, Key, { expiresIn: "7D" });
 }
@@ -11,6 +11,7 @@ const VerifyToken = (Token) => {
 }
 
 const Protect = (req, res, next) => {
+
     console.log("In protect");
 
     let token = req.headers.authorization?.split(" ")[1];
@@ -21,7 +22,6 @@ const Protect = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, Key);
-
         const user = decoded.User;
 
         req.user = user;
