@@ -1,5 +1,5 @@
 const express = require("express");
-const { Protect } = require("../Middleware/TokenMiddleware");
+const { Protect } = require("../utils/Token");
 const PartialSubmission = require("../models/PartialSubmission_Model");
 const PartialSubmission_Model = require("../models/PartialSubmission_Model");
 const AssingmentModel = require("../models/Assingment_Model");
