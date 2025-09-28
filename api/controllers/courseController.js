@@ -27,7 +27,10 @@ async function createCourse(req, res) {
 
 async function getCourse(req, res) {
   try {
-    const course = await Course.findById(req.params.courseId)
+    const course = await Course.findById(req.params.courseId).populate({
+      path: 'studentIds',
+      select: 'name status'
+    });
     if (!course) return res.status(404).json({ error: "Course not found" });
     res.json(course);
   } catch (err) {
@@ -37,12 +40,24 @@ async function getCourse(req, res) {
 
 async function listCourses(req, res) {
   try {
+    const courses = await Course.find();
+    res.json(courses);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to list courses" });
+  }
+}
+
+
+async function SpecificCourses(req, res) {
+  try {
     const courses = await Course.find({});
     res.json(courses);
   } catch (err) {
     res.status(500).json({ error: "Failed to list courses" });
   }
 }
+
+
 
 async function addStudentToCourse(req, res) {
   try {
@@ -95,17 +110,26 @@ async function joinCourse(req, res) {
 
 async function listCoursesByInstructor(req, res) {
   try {
-    const { instructorId } = req.params;
-    const instructor = await User.findById(instructorId);
-    if (!instructor)
+    const instructor = await User.findById(req.user._id);
+    if (!instructor) {
       return res.status(404).json({ error: "Instructor not found" });
+    }
 
-    const courses = await Course.find({ instructorId });
+
+    const courses = await Course.find({ instructorId: req.user._id }).populate({
+      path: 'studentIds',
+      select: 'name status'
+    });
+
     res.json(courses);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Failed to list courses for instructor" });
   }
 }
+
+
+
 
 async function listStudents(req, res) {
   try {
