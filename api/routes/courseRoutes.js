@@ -22,5 +22,4 @@ courseRouter.post("/add-student/:courseId", addStudentToCourse);
 courseRouter.post("/join/:courseId", joinCourse);
 courseRouter.get("/:courseId", getCourse);
 
-
 module.exports = { courseRouter };
