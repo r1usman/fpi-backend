@@ -9,7 +9,7 @@ const {
   listCoursesByInstructor,
 } = require("../controllers/courseController");
 const { getResources, upload } = require("./resource/rec");
-const { Protect } = require("../utils/Token")
+const { Protect } = require("../utils/Token");
 
 const courseRouter = express.Router();
 
@@ -19,10 +19,9 @@ courseRouter.post("/", createCourse);
 courseRouter.get("/", listCourses);
 courseRouter.get("/students", listStudents);
 courseRouter.post("/upload", upload.single("file"), getResources);
-courseRouter.get("/instructor/", Protect, listCoursesByInstructor);
+courseRouter.get("/instructor", Protect, listCoursesByInstructor);
 courseRouter.post("/add-student/:courseId", addStudentToCourse);
 courseRouter.post("/join/:courseId", joinCourse);
 courseRouter.get("/:courseId", getCourse);
-
 
 module.exports = { courseRouter };

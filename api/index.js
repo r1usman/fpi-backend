@@ -8,6 +8,9 @@ const ConnectDb = require("./Database.js");
 const User = require("./models/user.model.js");
 const AuthRoutes = require("./routes/AuthRoutes.js");
 const { courseRouter } = require("./routes/courseRoutes.js");
+const AssingmentRoutes = require("./routes/Assingment_Routes.js");
+// const PartialSubmission = require("./routes/PartialSubmission_Route.js")
+const NotificationRoutes = require("./routes/NotificationRoutes.js");
 const AssingmentRoutes = require("./routes/Assingment_Routes.js")
 const NotificationRoutes = require("./routes/NotificationRoutes.js")
 const PartialAssingment = require("./routes/PartialSubmission_Route.js")
@@ -223,15 +226,30 @@ app.use('/uploadPartial', express.static(path.join(__dirname, 'uploadPartial'),
   }
 ));
 
+app.use(cookieParser());
 app.use("/Auth", AuthRoutes);
 app.use("/courses", courseRouter);
-app.use("/Assign", AssingmentRoutes)
-app.use("/Partial", PartialAssingment)
-app.use("/Notifications", NotificationRoutes)
+app.use("/Assign", AssingmentRoutes);
+// app.use("/Partial", PartialSubmission)
+app.use("/Notifications", NotificationRoutes);
 
-server.listen(port, () => {
-  console.log(`App Listening at Port ${port}`);
+app.get("/", async (req, res) => {
+  try {
+    const user = await User.find();
+    res.send(user);
+  } catch (error) {
+    console.log("error", error);
+  }
 });
+
+app.listen(port, () => {
+  app.use("/Assign", AssingmentRoutes)
+  app.use("/Partial", PartialAssingment)
+  app.use("/Notifications", NotificationRoutes)
+
+  server.listen(port, () => {
+    console.log(`App Listening at Port ${port}`);
+  });
 
 
 
