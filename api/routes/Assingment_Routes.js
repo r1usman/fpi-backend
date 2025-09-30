@@ -22,7 +22,8 @@ route.post("/Create", Protect, async (req, res) => {
                     questionText: "",
                     options: [""],
                     marks: "",
-                    answer: ""
+                    answer: "",
+                    StudentAnswer: ""
                 }
             ],
             sections: [
@@ -175,19 +176,19 @@ route.get("/student", Protect, async (req, res) => {
             dueDate: { $gte: new Date() }
         });
 
-
+        // res.json(assignments)
         if (!assignments || assignments.length === 0) {
             return res.status(404).json({ message: "No assignments found for this student" });
         }
 
         const assignmentIds = assignments.map(a => a._id.toString());
-
-        // 1. Find submissions with status = submitted
         const submittedSubmissions = await PartialSubmission_Model.find({
             assignmentId: { $in: assignmentIds },
             Students: { $elemMatch: { _id: req.user._id } },
-            status: "submitted"
+            status: { $in: ["submitted", "graded"] }
         });
+
+
 
         const submittedIds = submittedSubmissions.map(ps => ps.assignmentId.toString());
 

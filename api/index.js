@@ -15,6 +15,7 @@ const NotificationRoutes = require("./routes/NotificationRoutes.js");
 const PartialAssingment = require("./routes/PartialSubmission_Route.js");
 const PartialSubmission_Model = require("./models/PartialSubmission_Model.js");
 const Assingment_Model = require("./models/Assingment_Model.js");
+const AskAi = require("./routes/AI_Routes.js")
 
 dotenv.config();
 
@@ -65,6 +66,7 @@ app.use("/courses", courseRouter);
 app.use("/Assign", AssingmentRoutes);
 app.use("/Partial", PartialAssingment);
 app.use("/Notifications", NotificationRoutes);
+app.use("/Ask", AskAi);
 
 app.get("/", async (req, res) => {
   try {
@@ -137,6 +139,7 @@ io.on("connection", (socket) => {
   socket.on("Answering", (User, SocketGroup, currentIndex, answer, Flag) => {
     socket.to(SocketGroup).emit("Answering", User, currentIndex, answer, Flag);
   });
+
 
   socket.on(
     "Save",

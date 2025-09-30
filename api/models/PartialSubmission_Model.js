@@ -13,10 +13,12 @@ const partialSubmissionSchema = new mongoose.Schema({
                 enum: ["true_false", "mcq", "short_answer", "code"],
                 default: "short_answer"
             },
-            questionText: { type: String, },
+            questionText: { type: String },
             options: [String],
             marks: { type: Number },
             answer: { type: String },
+            StudentAnswer: { type: String },
+
             isLocked: {
                 type: Boolean,
                 default: false,

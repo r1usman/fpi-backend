@@ -8,7 +8,7 @@ const QuestionSchema = new mongoose.Schema({
     },
     questionText: { type: String, },
     options: [String],
-    correctAnswer: mongoose.Schema.Types.Mixed,
+    StudentAnswer: { type: String },
     marks: { type: Number },
     answer: { type: String },
 });

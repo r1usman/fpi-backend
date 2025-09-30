@@ -98,7 +98,10 @@ route.get("/Info", Protect, async (req, res) => {
 
 route.get("/SubmitAssingments", async (req, res) => {
     try {
-        const result = await AssingmentModel.find({ dueDate: { $lte: Date.now() } }).sort({ dueDate: 1 })
+        const result = await AssingmentModel.find({
+            dueDate: { $gte: new Date() }
+        });
+
         if (!result || result.length === 0) {
             return res.status(404).json({ message: "No submission found" });
         }
