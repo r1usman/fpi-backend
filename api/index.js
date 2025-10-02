@@ -15,7 +15,11 @@ const NotificationRoutes = require("./routes/NotificationRoutes.js");
 const PartialAssingment = require("./routes/PartialSubmission_Route.js");
 const PartialSubmission_Model = require("./models/PartialSubmission_Model.js");
 const Assingment_Model = require("./models/Assingment_Model.js");
-const AskAi = require("./routes/AI_Routes.js")
+const AskAi = require("./routes/AI_Routes.js");
+const Submission_Model = require("./models/Submission.js");
+const Challenge_Model = require("./models/Challenge_Model.js");
+const Challenge = require("./routes/ChallengeRoutes.js");
+const SubmissionRoutes = require("./routes/SubmissionRoutes.js")
 
 dotenv.config();
 
@@ -67,6 +71,8 @@ app.use("/Assign", AssingmentRoutes);
 app.use("/Partial", PartialAssingment);
 app.use("/Notifications", NotificationRoutes);
 app.use("/Ask", AskAi);
+app.use("/Chlg", Challenge);
+app.use("/Code", SubmissionRoutes);
 
 app.get("/", async (req, res) => {
   try {
