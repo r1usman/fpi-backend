@@ -5,11 +5,29 @@ const problemController = require('../controllers/singleProblemController');
 const { Protect } = require('../Middleware/AuthMiddleware');
 const { adminAccess } = require('../Middleware/AdminAccess');
 
+
+// ============================================
+// Problem searching and filtering
+// ============================================
+
 // curl -X GET http://localhost:5000/api/problems
 router.get('/', problemController.getAllProblems);
 
 // curl -X GET http://localhost:5000/api/problems/68958f856f85ddae60d1a773
 router.get('/:id', problemController.getProblemById);
+
+// Filter by difficulty
+router.get('/filter/difficulty/:level', problemController.filterByDifficulty);
+
+// Filter by tags
+router.get('/filter/tags', problemController.filterByTags);
+
+// Search by name or number
+router.get('/search', problemController.searchProblems);
+
+// ============================================
+// Problem, Solution Addition by Admin
+// ============================================
 
 // Problems
 router.post("/", Protect, adminAccess, problemController.createProblem);

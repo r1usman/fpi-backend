@@ -15,6 +15,125 @@ exports.getProblemById = async (req, res) => {
   }
 };
 
+
+// Filter problems by difficulty level
+exports.filterByDifficulty = async (req, res) => {
+  try {
+    const { level } = req.params;
+    const validDifficulties = ["EASY", "MEDIUM", "HARD", "MEDIUM_HARD", "VERY_HARD"];
+    
+    if (!validDifficulties.includes(level.toUpperCase())) {
+      return res.status(400).json({ 
+        error: "Invalid difficulty level", 
+        validLevels: validDifficulties 
+      });
+    }
+
+    const problems = await Problem.find({ 
+      difficulty: level.toUpperCase() 
+    }).select('-solutions'); // exclude solutions for list view
+
+    res.json({
+      count: problems.length,
+      difficulty: level.toUpperCase(),
+      problems
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Filter problems by tags (supports multiple tags)
+exports.filterByTags = async (req, res) => {
+  try {
+    const { tags } = req.query; // expects comma-separated tags
+    
+    if (!tags) {
+      return res.status(400).json({ 
+        error: "Please provide tags parameter",
+        example: "?tags=Dynamic programming,Graph"
+      });
+    }
+
+    const tagArray = tags.split(',').map(tag => tag.trim());
+    
+    const validTags = [
+      "Divide and conquer",
+      "Greedy",
+      "Graph",
+      "Math",
+      "Mathematics",
+      "Sorting",
+      "Strings",
+      "Dynamic programming",
+      "Combinatorics",
+      "Data structures",
+      "Bit manipulation",
+      "Recursion and backtracking"
+    ];
+
+    // Case-insensitive matching
+    const problems = await Problem.find({
+      $or: [
+        { tags: { $in: tagArray.map(t => new RegExp(t, 'i')) } },
+        { skill_types: { $in: tagArray.map(t => new RegExp(t, 'i')) } },
+        { raw_tags: { $in: tagArray.map(t => new RegExp(t, 'i')) } }
+      ]
+    }).select('-solutions');
+
+    res.json({
+      count: problems.length,
+      searchedTags: tagArray,
+      problems
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Search problems by name or problem number
+exports.searchProblems = async (req, res) => {
+  try {
+    const { q, source } = req.query; // q = query string
+    
+    if (!q) {
+      return res.status(400).json({ 
+        error: "Please provide search query",
+        example: "?q=bargain or ?q=1422C&source=codeforces"
+      });
+    }
+
+    let searchQuery = {
+      $or: [
+        { name: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } }
+      ]
+    };
+
+    // If searching by problem number with source
+    if (source) {
+      searchQuery.$or.push({
+        source: { $regex: source, $options: 'i' },
+        url: { $regex: q, $options: 'i' }
+      });
+    }
+
+    const problems = await Problem.find(searchQuery).select('-solutions');
+
+    res.json({
+      count: problems.length,
+      query: q,
+      source: source || 'all',
+      problems
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+// ======================================================
+
 // Add problem
 exports.createProblem = async (req, res) => {
   try {
