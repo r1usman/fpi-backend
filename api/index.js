@@ -17,7 +17,18 @@ const PartialSubmission_Model = require("./models/PartialSubmission_Model.js");
 const Assingment_Model = require("./models/Assingment_Model.js");
 const AskAi = require("./routes/AI_Routes.js")
 
+const SingleProblemRoutes = require("./routes/singleProblemRoute.js");
+const SingleSubmissionRoutes = require("./routes/singleSubmissionRoute.js");
+
 dotenv.config();
+
+// ADD THESE DEBUG LINES
+console.log('=== ENVIRONMENT VARIABLE DEBUG ===');
+console.log('Current directory:', __dirname);
+console.log('MONGO variable:', process.env.MONGO);
+console.log('MongoURL variable:', process.env.MongoURL);
+console.log('All env keys:', Object.keys(process.env).filter(key => key.includes('MONGO') || key.includes('Mongo')));
+console.log('===================================');
 
 const app = express();
 const server = createServer(app);
@@ -67,6 +78,10 @@ app.use("/Assign", AssingmentRoutes);
 app.use("/Partial", PartialAssingment);
 app.use("/Notifications", NotificationRoutes);
 app.use("/Ask", AskAi);
+
+// Problem Routes
+app.use("/api/problems", SingleProblemRoutes);
+app.use("/api/submissions", SingleSubmissionRoutes);
 
 app.get("/", async (req, res) => {
   try {

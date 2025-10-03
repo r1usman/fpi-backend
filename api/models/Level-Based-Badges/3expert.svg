@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 650">
+  <g transform="translate(350, 250)">
+    <circle cx="50" cy="50" r="45" fill="#7B68EE" stroke="#6B58DE" stroke-width="3"/>
+    <polygon points="50,15 57,32 75,35 62,47 65,65 50,56 35,65 38,47 25,35 43,32" fill="#FFD700" opacity="0.7"/>
+    <text x="50" y="48" font-size="14" font-weight="bold" text-anchor="middle" fill="#FFF">E</text>
+    <text x="50" y="85" font-size="12" text-anchor="middle" fill="#FFF">Expert</text>
+  </g>
+</svg>
