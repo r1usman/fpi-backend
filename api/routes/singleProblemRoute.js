@@ -26,6 +26,24 @@ router.get('/filter/tags', problemController.filterByTags);
 router.get('/search', problemController.searchProblems);
 
 // ============================================
+// Personalized problem for Student 
+// ============================================
+/*
+- User’s past submissions 
+  (solved vs unsolved).
+
+- Skill level 
+  (if you store rating or solved stats per difficulty).
+
+- Tag preferences 
+  (e.g., if user solved many Graph problems, suggest DP problems).
+
+*/
+
+router.get('/personalized', Protect, problemController.getPersonalizedProblems);
+
+
+// ============================================
 // Problem, Solution Addition by Admin
 // ============================================
 

@@ -15,6 +15,62 @@ exports.getProblemById = async (req, res) => {
   }
 };
 
+// ======================================================
+
+// Personalized Problem Recommendations
+exports.getPersonalizedProblems = async (req, res) => {
+  try {
+    const user = req.user; // from Protect middleware
+
+    // Example: user model might contain solvedProblems, preferredDifficulty, preferredTags
+    // You can expand this later as per your schema.
+    const { solvedProblems = [], preferredDifficulty, preferredTags = [] } = user;
+
+    // 1. Exclude problems already solved
+    let query = { _id: { $nin: solvedProblems } };
+
+    // 2. Filter by preferred difficulty (if user has one)
+    if (preferredDifficulty) {
+      query.difficulty = preferredDifficulty.toUpperCase();
+    }
+
+    // 3. Filter by preferred tags (if user has some)
+    if (preferredTags.length > 0) {
+      query.$or = [
+        { tags: { $in: preferredTags.map(t => new RegExp(t, 'i')) } },
+        { skill_types: { $in: preferredTags.map(t => new RegExp(t, 'i')) } },
+        { raw_tags: { $in: preferredTags.map(t => new RegExp(t, 'i')) } }
+      ];
+    }
+
+    // 4. Fetch problems (limit 10 to avoid overloading)
+    const recommendedProblems = await Problem.find(query)
+      .select("-solutions")
+      .limit(10);
+
+    // 5. If no personalized problems, fallback to random suggestions
+    if (recommendedProblems.length === 0) {
+      const randomProblems = await Problem.aggregate([{ $sample: { size: 5 } }]);
+      return res.json({
+        message: "No personalized problems found. Showing random problems instead.",
+        problems: randomProblems
+      });
+    }
+
+    res.json({
+      user: user.email || user._id,
+      count: recommendedProblems.length,
+      personalized: true,
+      problems: recommendedProblems
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+// ======================================================
+
 
 // Filter problems by difficulty level
 exports.filterByDifficulty = async (req, res) => {

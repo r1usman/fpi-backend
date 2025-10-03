@@ -20,6 +20,25 @@ const UserSchema = new mongoose.Schema(
         ref: "SingleSubmission",
       },
     ],
+
+    preferredDifficulty: { 
+      type: String, 
+      enum: ["EASY", "MEDIUM", "HARD", "MEDIUM_HARD", "VERY_HARD"], 
+      default: "EASY" 
+    },
+
+    solvedProblems: [
+      {type: String}
+    ],
+
+    preferredTags: [
+      {
+        type: String,
+        count: { type: Number, default: 1 } // track frequency of tag usage
+      }
+    ],
+
+
   },
   {
     timestamps: true,
