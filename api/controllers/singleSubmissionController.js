@@ -1,8 +1,9 @@
 // controllers/singleSubmissionController.js
-const User = require('../models/user.model');
+const User = require('../models/user.model'); // adjust path if needed
 const Problem = require('../models/SingleProblem');
 const Submission = require('../models/SingleSubmission');
 const axios = require('axios');
+const mongoose = require('mongoose');
 
 exports.createSubmission = async (req, res) => {
   try {
@@ -18,7 +19,7 @@ exports.createSubmission = async (req, res) => {
 
     let allPassed = true;
     let results = [];
-    let totalExecutionTime = 0; // aggregate CPU/run time (sum of testcases)
+    let totalExecutionTime = 0;
 
     for (const tc of testcases) {
       try {
@@ -55,10 +56,7 @@ exports.createSubmission = async (req, res) => {
           error: run.stderr || null
         });
 
-        if (run.cpu_time) {
-          // keep raw value from Piston (units depend on Piston; don't auto-convert)
-          totalExecutionTime += run.cpu_time;
-        }
+        if (run.cpu_time) totalExecutionTime += run.cpu_time;
       } catch (error) {
         allPassed = false;
         results.push({
@@ -92,38 +90,66 @@ exports.createSubmission = async (req, res) => {
       results,
       user: req.user._id,
       problem: problemId,
-      // stopwatch fields
       startedAt: startedAt ? new Date(startedAt) : undefined,
       endedAt: endedAt ? new Date(endedAt) : undefined,
       elapsedTimeMs: computedElapsedMs,
       executionTime: totalExecutionTime || undefined
     });
 
-    // Link submission to user (keep existing user model behavior)
+    // ====== Link submission to user and update preferences ======
     const user = await User.findById(req.user._id);
     if (user) {
       user.submissions = user.submissions || [];
       user.submissions.push(newSubmission._id);
 
       if (status === "accepted") {
-        // Add problem to solvedProblems
-        if (!user.solvedProblems.includes(problemId.toString())) {
-          user.solvedProblems.push(problemId.toString());
+        // --- 1) add solved problem (avoid duplicates) ---
+        const probIdStr = problem._id.toString();
+        const alreadySolved = (user.solvedProblems || []).some(id => id.toString() === probIdStr);
+        if (!alreadySolved) {
+          user.solvedProblems = user.solvedProblems || [];
+          user.solvedProblems.push(problem._id);
         }
 
-        // Auto-enrich preferredTags (optional)
-        if (problem.tags && problem.tags.length > 0) {
-          problem.tags.forEach(tag => {
-            if (!user.preferredTags.includes(tag)) {
-              user.preferredTags.push(tag);
-            }
-          });
+        // --- 2) update preferredTags as counts (handles old plain-string shape too) ---
+        user.preferredTags = user.preferredTags || [];
+
+        // normalize existing shape: convert any plain-string entries to {tag, count:1}
+        user.preferredTags = user.preferredTags.map(t => {
+          if (typeof t === 'string') return { tag: t, count: 1 };
+          return t;
+        });
+
+        const problemTags = Array.isArray(problem.tags) ? problem.tags : [];
+        for (const tag of problemTags) {
+          const idx = user.preferredTags.findIndex(t => t.tag.toLowerCase() === tag.toLowerCase());
+          if (idx === -1) {
+            user.preferredTags.push({ tag, count: 1 });
+          } else {
+            user.preferredTags[idx].count = (user.preferredTags[idx].count || 0) + 1;
+          }
+        }
+
+        // --- 3) Recalculate preferredDifficulty from all solved problems (dynamic average) ---
+        const difficultyMap = { EASY: 1, MEDIUM: 2, MEDIUM_HARD: 3, HARD: 4, VERY_HARD: 5 };
+        const reverseMap = { 1: 'EASY', 2: 'MEDIUM', 3: 'MEDIUM_HARD', 4: 'HARD', 5: 'VERY_HARD' };
+
+        // fetch difficulties for all solved problems (use user.solvedProblems which now includes the new problem)
+        const solvedIds = (user.solvedProblems || []).map(id => new mongoose.Types.ObjectId(id));
+        if (solvedIds.length > 0) {
+          const solvedDocs = await Problem.find({ _id: { $in: solvedIds } }, 'difficulty').lean();
+          const totalScore = solvedDocs.reduce((sum, p) => {
+            const d = p && p.difficulty ? (difficultyMap[p.difficulty] || 1) : 1;
+            return sum + d;
+          }, 0);
+          const avg = totalScore / solvedDocs.length;
+          const rounded = Math.round(avg);
+          user.preferredDifficulty = reverseMap[rounded] || user.preferredDifficulty || 'EASY';
         }
       }
 
       await user.save();
     }
-
 
     return res.status(201).json({ newSubmission });
   } catch (err) {
@@ -131,6 +157,10 @@ exports.createSubmission = async (req, res) => {
     return res.status(500).json({ message: err.message });
   }
 };
+
+
+
+// =============================================================
 
 
 /*
@@ -159,9 +189,18 @@ show all passed testcases on screen
 // ===========================================
 
 exports.getSubmission = async (req, res) => {
-  const submissions = await Submission.find();
-  res.json(submissions);
-}
+  try {
+    // match the correct field from your Submission schema
+    const submissions = await Submission.find({ user: req.user._id })
+      .populate("problem", "title difficulty") // optional: show problem info
+      .populate("user", "name email");         // optional: show student info
+    res.json(submissions);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
 
 exports.getSubmissionById = async (req, res) => {
   const submission = await Submission.findById(req.params.id);
