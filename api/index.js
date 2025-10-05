@@ -19,8 +19,8 @@ const AskAi = require("./routes/AI_Routes.js")
 
 const SingleProblemRoutes = require("./routes/singleProblemRoute.js");
 const SingleSubmissionRoutes = require("./routes/singleSubmissionRoute.js");
-const badgeRoutes = require("./routes/badgeRoutes");
-const certificationRoutes = require("./routes/certificationRoutes");
+// const badgeRoutes = require("./routes/badgeRoutes");
+// const certificationRoutes = require("./routes/certificationRoutes");
 
 dotenv.config();
 
@@ -84,8 +84,8 @@ app.use("/Ask", AskAi);
 // Problem Routes
 app.use("/api/problems", SingleProblemRoutes);
 app.use("/api/submissions", SingleSubmissionRoutes);
-app.use("/api/badges", badgeRoutes);
-app.use("/api/certifications", certificationRoutes);
+// app.use("/api/badges", badgeRoutes);
+// app.use("/api/certifications", certificationRoutes);
 
 app.get("/", async (req, res) => {
   try {
