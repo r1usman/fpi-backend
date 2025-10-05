@@ -3,13 +3,14 @@ const express = require("express");
 const axios = require("axios");
 const { Protect } = require("../utils/Token.js");
 const router = express.Router();
-const Submission_Model = require("../Models/Submission.js");
-const Challenge_Model = require("../Models/Challenge_Model.js");
-const Submission = require("../Models/Submission.js");
+const Submission_Model = require("../models/Submission.js");
+const Challenge_Model = require("../models/Challenge_Model.js");
+const Submission = require("../models/Submission.js");
 
 const JUDGE0_API = "https://judge0-ce.p.rapidapi.com";
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
 console.log(RAPIDAPI_KEY);
+
 
 
 // Language mapping

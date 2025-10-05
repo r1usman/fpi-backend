@@ -6,6 +6,8 @@ const upload = require("../Middleware/uploadMiddleware");
 const path = require("path")
 const fs = require("fs");
 const Submission = require("../Models/Submission");
+const { Course } = require("../models/Course.js");
+const Notification = require("../models/NotificationModel");
 route.post("/Create", Protect, async (req, res) => {
     try {
 
@@ -129,21 +131,56 @@ route.put("/Update/:id", Protect, async (req, res) => {
     try {
         const status = req.user.status;
         if (status == "Student")
-            return res.status(401).json({ message: "Student are Not Allowed" })
+            return res.status(401).json({ message: "Student are Not Allowed" });
 
         const id = req.params.id;
 
-        const Challenge = await Challenge_Model.findOne({ _id: id });
+        const Challenge = await Challenge_Model.findById(id);
         if (!Challenge)
-            return res.send("The challenge ID you are looking for does not exist.")
+            return res.status(404).send("The challenge ID you are looking for does not exist.");
 
         Object.assign(Challenge, req.body);
         const savedChallenge = await Challenge.save();
-        res.send(savedChallenge)
+
+        const courseId = savedChallenge.ChallengeFor;
+        const course = await Course.findById(courseId);
+        if (!course)
+            return res.status(404).json({ message: "Course not found for this challenge" });
+
+        const studentIds = course.studentIds;
+        console.log("studentIds", studentIds);
+
+        if (savedChallenge.isPublic) {
+            const formattedDate = new Date(savedChallenge.startTime).toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric'
+            });
+
+            await Notification.insertMany(
+                studentIds.map((studentId) => ({
+                    userId: studentId,
+                    title: `New Challenge Update`,
+                    message: `A course challenge has been updated and will start on ${formattedDate}. Please check your dashboard for details.`,
+                    challengeId: savedChallenge._id,
+                    courseId: course._id,
+                    read: false,
+                    createdAt: new Date()
+                }))
+            );
+        }
+
+
+
+        res.send({
+            message: "Challenge updated & notifications sent",
+            challenge: savedChallenge,
+        });
     } catch (error) {
-        res.status(500).json({ message: "Internal Server Error", error: error.message });
+        res
+            .status(500)
+            .json({ message: "Internal Server Error", error: error.message });
     }
-})
+});
+
 
 route.get("/GetLeaderBoardData", async (req, res) => {
     try {
@@ -285,7 +322,7 @@ route.get("/ak", Protect, async (req, res) => {
         challenges.forEach(ch => {
             if (Array.isArray(ch.SubmittedBy)) {
                 ch.SubmittedBy.forEach(s => {
-                    if (s && s.toString().trim() !== "") { // only non-empty values
+                    if (s && s.toString().trim() !== "") {
                         studentSet.add(s.toString());
                         const date = new Date(ch.createdAt).toISOString().slice(0, 10);
                         submissionsMap[date] = (submissionsMap[date] || 0) + 1;
@@ -293,8 +330,6 @@ route.get("/ak", Protect, async (req, res) => {
                 });
 
             }
-
-            // Count by difficulty
             const level = ch.difficulty;
             if (level && difficultyCount[level] !== undefined) {
                 difficultyCount[level]++;
@@ -303,12 +338,10 @@ route.get("/ak", Protect, async (req, res) => {
 
         const activeStudents = studentSet.size;
 
-        // Convert submissions map to sorted array
         const submissionsPerDay = Object.keys(submissionsMap)
             .sort()
             .map(date => ({ date, count: submissionsMap[date] }));
 
-        // Send response
         res.json({
             totalChallenges,
             activeStudents,

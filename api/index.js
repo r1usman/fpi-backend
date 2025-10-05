@@ -187,6 +187,8 @@ io.on("connection", (socket) => {
     if (UpdateSubmission.SubmissionVote.length >= 2) {
       socket.to(SocketGroup).emit("UpdateSubmissionVote", User, true);
       socket.emit("UpdateSubmissionVote", User, true);
+      console.log("UpdateSubmission", UpdateSubmission);
+
       await PartialSubmission_Model.findOneAndUpdate(
         { assignmentId: AssingmentId, _id: UpdateSubmission._id },
         {
