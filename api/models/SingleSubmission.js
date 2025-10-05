@@ -7,6 +7,11 @@ const singleSubmissionSchema = new mongoose.Schema({
   code: { type: String, required: true },
   note: { type: String },
 
+  // (1-a) Stop watch fields
+  startedAt: { type: Date },        // when user started (optional)
+  endedAt: { type: Date },          // when user ended (optional)
+  elapsedTimeMs: { type: Number },  // user's elapsed wall-clock time in ms (optional)
+
   // (2) what is the response of PISTON-API
   status: {
     type: String,

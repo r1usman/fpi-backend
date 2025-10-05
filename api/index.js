@@ -21,7 +21,20 @@ const Challenge_Model = require("./models/Challenge_Model.js");
 const Challenge = require("./routes/ChallengeRoutes.js");
 const SubmissionRoutes = require("./routes/SubmissionRoutes.js")
 
+const SingleProblemRoutes = require("./routes/singleProblemRoute.js");
+const SingleSubmissionRoutes = require("./routes/singleSubmissionRoute.js");
+// const badgeRoutes = require("./routes/badgeRoutes");
+// const certificationRoutes = require("./routes/certificationRoutes");
+
 dotenv.config();
+
+// ADD THESE DEBUG LINES
+console.log('=== ENVIRONMENT VARIABLE DEBUG ===');
+console.log('Current directory:', __dirname);
+console.log('MONGO variable:', process.env.MONGO);
+console.log('MongoURL variable:', process.env.MongoURL);
+console.log('All env keys:', Object.keys(process.env).filter(key => key.includes('MONGO') || key.includes('Mongo')));
+console.log('===================================');
 
 const app = express();
 const server = createServer(app);
@@ -73,6 +86,12 @@ app.use("/Notifications", NotificationRoutes);
 app.use("/Ask", AskAi);
 app.use("/Chlg", Challenge);
 app.use("/Code", SubmissionRoutes);
+
+// Problem Routes
+app.use("/api/problems", SingleProblemRoutes);
+app.use("/api/submissions", SingleSubmissionRoutes);
+// app.use("/api/badges", badgeRoutes);
+// app.use("/api/certifications", certificationRoutes);
 
 app.get("/", async (req, res) => {
   try {
