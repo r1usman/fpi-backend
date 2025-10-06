@@ -5,6 +5,165 @@ const Submission = require('../models/SingleSubmission');
 const axios = require('axios');
 const mongoose = require('mongoose');
 
+// exports.createSubmission = async (req, res) => {
+//   try {
+//     const { language, version, code, problemId, startedAt, endedAt, elapsedTimeMs } = req.body;
+
+//     // validate problem
+//     const problem = await Problem.findById(problemId);
+//     if (!problem) {
+//       return res.status(404).json({ message: 'Problem not found' });
+//     }
+
+//     const testcases = problem.examples || [];
+
+//     let allPassed = true;
+//     let results = [];
+//     let totalExecutionTime = 0;
+
+//     for (const tc of testcases) {
+//       try {
+//         const apiRes = await axios.post('http://localhost:2000/api/v2/execute', {
+//           language,
+//           version,
+//           files: [
+//             {
+//               name:
+//                 language === "java"
+//                   ? "Main.java"
+//                   : language === "python"
+//                     ? "main.py"
+//                     : "main.js",
+//               content: code,
+//             },
+//           ],
+//           stdin: String(tc.input),
+//         });
+
+//         const run = apiRes.data.run || {};
+//         const output = (run.stdout || "").trim();
+//         const expected = (tc.output || "").trim();
+//         const passed = output === expected;
+
+//         if (!passed) allPassed = false;
+
+//         results.push({
+//           input: tc.input,
+//           expected,
+//           output,
+//           passed,
+//           executionTime: run.cpu_time ?? null,
+//           error: run.stderr || null
+//         });
+
+//         if (run.cpu_time) totalExecutionTime += run.cpu_time;
+//       } catch (error) {
+//         allPassed = false;
+//         results.push({
+//           input: tc.input,
+//           expected: tc.output || "",
+//           output: "",
+//           passed: false,
+//           error: error.message
+//         });
+//       }
+//     }
+
+//     const status = allPassed ? "accepted" : "rejected";
+
+//     // compute elapsedTimeMs if not provided but startedAt and endedAt are present
+//     let computedElapsedMs = typeof elapsedTimeMs === 'number' ? elapsedTimeMs : undefined;
+//     if ((computedElapsedMs === undefined) && startedAt && endedAt) {
+//       const s = new Date(startedAt);
+//       const e = new Date(endedAt);
+//       if (!isNaN(s.getTime()) && !isNaN(e.getTime()) && e.getTime() >= s.getTime()) {
+//         computedElapsedMs = e.getTime() - s.getTime();
+//       }
+//     }
+
+//     const newSubmission = await Submission.create({
+//       language,
+//       version,
+//       code,
+//       note: req.body.note || "",
+//       status,
+//       results,
+//       user: req.user._id,
+//       problem: problemId,
+//       startedAt: startedAt ? new Date(startedAt) : undefined,
+//       endedAt: endedAt ? new Date(endedAt) : undefined,
+//       elapsedTimeMs: computedElapsedMs,
+//       executionTime: totalExecutionTime || undefined
+//     });
+
+//     // ====== Link submission to user and update preferences ======
+//     const user = await User.findById(req.user._id);
+//     if (user) {
+//       user.submissions = user.submissions || [];
+//       user.submissions.push(newSubmission._id);
+
+//       if (status === "accepted") {
+//         // --- 1) add solved problem (avoid duplicates) ---
+//         const probIdStr = problem._id.toString();
+//         const alreadySolved = (user.solvedProblems || []).some(id => id.toString() === probIdStr);
+//         if (!alreadySolved) {
+//           user.solvedProblems = user.solvedProblems || [];
+//           user.solvedProblems.push(problem._id);
+//         }
+
+//         // --- 2) update preferredTags as counts (handles old plain-string shape too) ---
+//         user.preferredTags = user.preferredTags || [];
+
+//         // normalize existing shape: convert any plain-string entries to {tag, count:1}
+//         user.preferredTags = user.preferredTags.map(t => {
+//           if (typeof t === 'string') return { tag: t, count: 1 };
+//           return t;
+//         });
+
+//         const problemTags = Array.isArray(problem.tags) ? problem.tags : [];
+//         for (const tag of problemTags) {
+//           const idx = user.preferredTags.findIndex(t => t.tag.toLowerCase() === tag.toLowerCase());
+//           if (idx === -1) {
+//             user.preferredTags.push({ tag, count: 1 });
+//           } else {
+//             user.preferredTags[idx].count = (user.preferredTags[idx].count || 0) + 1;
+//           }
+//         }
+
+//         // --- 3) Recalculate preferredDifficulty from all solved problems (dynamic average) ---
+//         const difficultyMap = { EASY: 1, MEDIUM: 2, MEDIUM_HARD: 3, HARD: 4, VERY_HARD: 5 };
+//         const reverseMap = { 1: 'EASY', 2: 'MEDIUM', 3: 'MEDIUM_HARD', 4: 'HARD', 5: 'VERY_HARD' };
+
+//         // fetch difficulties for all solved problems (use user.solvedProblems which now includes the new problem)
+//         const solvedIds = (user.solvedProblems || []).map(id => new mongoose.Types.ObjectId(id));
+//         if (solvedIds.length > 0) {
+//           const solvedDocs = await Problem.find({ _id: { $in: solvedIds } }, 'difficulty').lean();
+//           const totalScore = solvedDocs.reduce((sum, p) => {
+//             const d = p && p.difficulty ? (difficultyMap[p.difficulty] || 1) : 1;
+//             return sum + d;
+//           }, 0);
+//           const avg = totalScore / solvedDocs.length;
+//           const rounded = Math.round(avg);
+//           user.preferredDifficulty = reverseMap[rounded] || user.preferredDifficulty || 'EASY';
+//         }
+//       }
+
+//       await user.save();
+//     }
+
+//     return res.status(201).json({ newSubmission });
+//   } catch (err) {
+//     console.error('createSubmission error:', err);
+//     return res.status(500).json({ message: err.message });
+//   }
+// };
+
+
+
+// =============================================================
+
+const EXECUTE_URL = "http://51.21.181.78:2000/api/v2/execute";
+
 exports.createSubmission = async (req, res) => {
   try {
     const { language, version, code, problemId, startedAt, endedAt, elapsedTimeMs } = req.body;
@@ -12,28 +171,29 @@ exports.createSubmission = async (req, res) => {
     // validate problem
     const problem = await Problem.findById(problemId);
     if (!problem) {
-      return res.status(404).json({ message: 'Problem not found' });
+      return res.status(404).json({ message: "Problem not found" });
     }
 
     const testcases = problem.examples || [];
-
     let allPassed = true;
     let results = [];
     let totalExecutionTime = 0;
 
     for (const tc of testcases) {
       try {
-        const apiRes = await axios.post('http://localhost:2000/api/v2/execute', {
+        const apiRes = await axios.post(EXECUTE_URL, {
           language,
           version,
           files: [
             {
               name:
-                language === "java"
+                language.toLowerCase() === "java"
                   ? "Main.java"
-                  : language === "python"
-                    ? "main.py"
-                    : "main.js",
+                  : language.toLowerCase() === "python"
+                  ? "main.py"
+                  : language.toLowerCase() === "c++"
+                  ? "main.cpp"
+                  : "main.js",
               content: code,
             },
           ],
@@ -53,7 +213,7 @@ exports.createSubmission = async (req, res) => {
           output,
           passed,
           executionTime: run.cpu_time ?? null,
-          error: run.stderr || null
+          error: run.stderr || run.compile_output || null,
         });
 
         if (run.cpu_time) totalExecutionTime += run.cpu_time;
@@ -64,7 +224,7 @@ exports.createSubmission = async (req, res) => {
           expected: tc.output || "",
           output: "",
           passed: false,
-          error: error.message
+          error: error.message,
         });
       }
     }
@@ -72,7 +232,7 @@ exports.createSubmission = async (req, res) => {
     const status = allPassed ? "accepted" : "rejected";
 
     // compute elapsedTimeMs if not provided but startedAt and endedAt are present
-    let computedElapsedMs = typeof elapsedTimeMs === 'number' ? elapsedTimeMs : undefined;
+    let computedElapsedMs = typeof elapsedTimeMs === "number" ? elapsedTimeMs : undefined;
     if ((computedElapsedMs === undefined) && startedAt && endedAt) {
       const s = new Date(startedAt);
       const e = new Date(endedAt);
@@ -93,7 +253,7 @@ exports.createSubmission = async (req, res) => {
       startedAt: startedAt ? new Date(startedAt) : undefined,
       endedAt: endedAt ? new Date(endedAt) : undefined,
       elapsedTimeMs: computedElapsedMs,
-      executionTime: totalExecutionTime || undefined
+      executionTime: totalExecutionTime || undefined,
     });
 
     // ====== Link submission to user and update preferences ======
@@ -111,18 +271,17 @@ exports.createSubmission = async (req, res) => {
           user.solvedProblems.push(problem._id);
         }
 
-        // --- 2) update preferredTags as counts (handles old plain-string shape too) ---
+        // --- 2) update preferredTags as counts ---
         user.preferredTags = user.preferredTags || [];
-
-        // normalize existing shape: convert any plain-string entries to {tag, count:1}
-        user.preferredTags = user.preferredTags.map(t => {
-          if (typeof t === 'string') return { tag: t, count: 1 };
-          return t;
-        });
+        user.preferredTags = user.preferredTags.map(t =>
+          typeof t === "string" ? { tag: t, count: 1 } : t
+        );
 
         const problemTags = Array.isArray(problem.tags) ? problem.tags : [];
         for (const tag of problemTags) {
-          const idx = user.preferredTags.findIndex(t => t.tag.toLowerCase() === tag.toLowerCase());
+          const idx = user.preferredTags.findIndex(
+            t => t.tag.toLowerCase() === tag.toLowerCase()
+          );
           if (idx === -1) {
             user.preferredTags.push({ tag, count: 1 });
           } else {
@@ -130,21 +289,25 @@ exports.createSubmission = async (req, res) => {
           }
         }
 
-        // --- 3) Recalculate preferredDifficulty from all solved problems (dynamic average) ---
+        // --- 3) recalc difficulty ---
         const difficultyMap = { EASY: 1, MEDIUM: 2, MEDIUM_HARD: 3, HARD: 4, VERY_HARD: 5 };
-        const reverseMap = { 1: 'EASY', 2: 'MEDIUM', 3: 'MEDIUM_HARD', 4: 'HARD', 5: 'VERY_HARD' };
+        const reverseMap = { 1: "EASY", 2: "MEDIUM", 3: "MEDIUM_HARD", 4: "HARD", 5: "VERY_HARD" };
 
-        // fetch difficulties for all solved problems (use user.solvedProblems which now includes the new problem)
-        const solvedIds = (user.solvedProblems || []).map(id => new mongoose.Types.ObjectId(id));
+        const solvedIds = (user.solvedProblems || []).map(
+          id => new mongoose.Types.ObjectId(id)
+        );
         if (solvedIds.length > 0) {
-          const solvedDocs = await Problem.find({ _id: { $in: solvedIds } }, 'difficulty').lean();
+          const solvedDocs = await Problem.find(
+            { _id: { $in: solvedIds } },
+            "difficulty"
+          ).lean();
           const totalScore = solvedDocs.reduce((sum, p) => {
-            const d = p && p.difficulty ? (difficultyMap[p.difficulty] || 1) : 1;
+            const d = p && p.difficulty ? difficultyMap[p.difficulty] || 1 : 1;
             return sum + d;
           }, 0);
           const avg = totalScore / solvedDocs.length;
           const rounded = Math.round(avg);
-          user.preferredDifficulty = reverseMap[rounded] || user.preferredDifficulty || 'EASY';
+          user.preferredDifficulty = reverseMap[rounded] || user.preferredDifficulty || "EASY";
         }
       }
 
@@ -153,14 +316,11 @@ exports.createSubmission = async (req, res) => {
 
     return res.status(201).json({ newSubmission });
   } catch (err) {
-    console.error('createSubmission error:', err);
+    console.error("createSubmission error:", err);
     return res.status(500).json({ message: err.message });
   }
 };
 
-
-
-// =============================================================
 
 
 /*
