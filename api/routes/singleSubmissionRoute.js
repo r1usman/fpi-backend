@@ -3,13 +3,37 @@ const router = express.Router();
 const submissionController = require('../controllers/singleSubmissionController.js');
 const { Protect } = require('../Middleware/AuthMiddleware');
 
+/* ======================= Submission with no time
+{
+  "language": "python",
+  "version": "3.12.0",
+  "code": "n = int(input())\narr = list(map(int, input().split()))\nprint(max(arr))",
+  "problemId": "68df84abb7e93d5a30299a26"
+}
+*/
+
+// ========================= Submission with Time
+/* 
+{
+  "language": "python",
+  "version": "3.12.0",
+  "code": "n = int(input())\ns = input().strip()\ntotal_substrings = n * (n + 1) // 2\nres = 0\ncount = 0\nfor c in s:\n    if c == '1':\n        count += 1\n    else:\n        count = 0\n    res += count\nprint(total_substrings + res)",
+  "problemId": "68e106b20ce06941bce29a7d",
+  "elapsedTimeMs": 180000
+}
+
+*/
+
 /*
 {
   "language": "python",
   "version": "3.12.0",
-  "code": "MOD = 10**9 + 7\ns = input().strip()\nn = len(s)\npow10 = [1] * (n + 1)\nfor i in range(1, n + 1):\n    pow10[i] = (pow10[i - 1] * 10) % MOD\n\nprefix = [0] * (n + 1)\nfor i in range(n):\n    prefix[i + 1] = (prefix[i] * 10 + int(s[i])) % MOD\n\ntotal = 0\nfor i in range(n):\n    for j in range(i + 1, n + 1):\n        left = prefix[i]\n        right = (prefix[n] - prefix[j] * pow10[n - j]) % MOD\n        if right < 0:\n            right += MOD\n        val = (left * pow10[n - j] + right) % MOD\n        total = (total + val) % MOD\n\nprint(total)",
-  "problemId": "689f4290dbb610a6990da83f"
+  "code": "print(input())",
+  "problemId": "68df84abb7e93d5a30299a26",
+  "startedAt": "2025-10-03T14:20:00.000Z",
+  "endedAt": "2025-10-03T14:22:15.295Z"
 }
+
 */
 router.post('/', Protect, submissionController.createSubmission);
 

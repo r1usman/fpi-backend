@@ -29,6 +29,10 @@ router.post("/bulk-insert", problemController.bulkInsertProblems);
 // Problem searching and filtering
 // ============================================
 
+// =============================================== (Also need to add search by Tags)
+// Search by name 
+router.get('/search', problemController.searchProblems);
+
 // curl -X GET http://localhost:5000/api/problems
 router.get('/', problemController.getAllProblems);
 
@@ -40,9 +44,6 @@ router.get('/filter/difficulty/:level', problemController.filterByDifficulty);
 
 // Filter by tags
 router.get('/filter/tags', problemController.filterByTags);
-
-// Search by name or number
-router.get('/search', problemController.searchProblems);
 
 // ============================================
 // Problem, Solution Addition by Admin
