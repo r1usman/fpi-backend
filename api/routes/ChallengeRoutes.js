@@ -98,6 +98,7 @@ route.get("/GetDashboard", Protect, async (req, res) => {
 route.get("/GetAllWithPublic", Protect, async (req, res) => {
     try {
         const status = req.user.status;
+        const CourseData = await Course
         console.log(status);
 
         if (status == "Instrutor")
