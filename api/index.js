@@ -15,7 +15,7 @@ const NotificationRoutes = require("./routes/NotificationRoutes.js");
 const PartialAssingment = require("./routes/PartialSubmission_Route.js");
 const PartialSubmission_Model = require("./models/PartialSubmission_Model.js");
 const Assingment_Model = require("./models/Assingment_Model.js");
-const AskAi = require("./routes/AI_Routes.js")
+const AskAi = require("./routes/AI_Routes.js");
 
 dotenv.config();
 
@@ -29,7 +29,6 @@ const io = new Server(server, {
   },
 });
 
-
 ConnectDb(process.env.MONGO);
 
 app.use(express.json());
@@ -40,7 +39,6 @@ app.use(
   })
 );
 app.use(cookieParser());
-
 
 app.use(
   "/uploads",
@@ -60,7 +58,6 @@ app.use(
   })
 );
 
-
 app.use("/Auth", AuthRoutes);
 app.use("/courses", courseRouter);
 app.use("/Assign", AssingmentRoutes);
@@ -77,7 +74,6 @@ app.get("/", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
-
 
 const onlineUsers = {};
 
@@ -140,10 +136,15 @@ io.on("connection", (socket) => {
     socket.to(SocketGroup).emit("Answering", User, currentIndex, answer, Flag);
   });
 
-
   socket.on(
     "Save",
-    async (SocketGroup, User, currentIndex, AssingmentId, PartialSubmission) => {
+    async (
+      SocketGroup,
+      User,
+      currentIndex,
+      AssingmentId,
+      PartialSubmission
+    ) => {
       console.log("AssingmentId", AssingmentId);
       console.log("PartialSubmission", PartialSubmission);
       socket.to(SocketGroup).emit("SaveBy", User, currentIndex);
@@ -159,48 +160,57 @@ io.on("connection", (socket) => {
     }
   );
 
-  socket.on("Reset", async (SocketGroup, currentIndex, AssingmentId, UpdateSubmission) => {
-    socket.to(SocketGroup).emit("Answering", null, currentIndex, "", false);
-    await PartialSubmission_Model.findOneAndUpdate(
-      { assignmentId: AssingmentId, _id: UpdateSubmission._id },
-      { $set: { Questions: UpdateSubmission.Questions } },
-      { new: true }
-    );
-  });
-
-  socket.on("Votes", async (SocketGroup, User, currentIndex, AssingmentId, UpdateSubmission) => {
-    socket.to(SocketGroup).emit("UpdateVotes", User, currentIndex);
-    await PartialSubmission_Model.findOneAndUpdate(
-      { assignmentId: AssingmentId, _id: UpdateSubmission._id },
-      { $set: { Questions: UpdateSubmission.Questions } },
-      { new: true }
-    );
-  });
-
-  socket.on("SubmissionVote", async (SocketGroup, User, AssingmentId, UpdateSubmission) => {
-    if (UpdateSubmission.SubmissionVote.length >= 2) {
-      socket.to(SocketGroup).emit("UpdateSubmissionVote", User, true);
-      socket.emit("UpdateSubmissionVote", User, true);
+  socket.on(
+    "Reset",
+    async (SocketGroup, currentIndex, AssingmentId, UpdateSubmission) => {
+      socket.to(SocketGroup).emit("Answering", null, currentIndex, "", false);
       await PartialSubmission_Model.findOneAndUpdate(
         { assignmentId: AssingmentId, _id: UpdateSubmission._id },
-        {
-          $set: {
-            SubmissionVote: UpdateSubmission.SubmissionVote,
-            status: "submitted",
-          },
-        },
-        { new: true }
-      );
-    } else {
-      socket.to(SocketGroup).emit("UpdateSubmissionVote", User, false);
-      socket.emit("UpdateSubmissionVote", User, false);
-      await PartialSubmission_Model.findOneAndUpdate(
-        { assignmentId: AssingmentId, _id: UpdateSubmission._id },
-        { $set: { SubmissionVote: UpdateSubmission.SubmissionVote } },
+        { $set: { Questions: UpdateSubmission.Questions } },
         { new: true }
       );
     }
-  });
+  );
+
+  socket.on(
+    "Votes",
+    async (SocketGroup, User, currentIndex, AssingmentId, UpdateSubmission) => {
+      socket.to(SocketGroup).emit("UpdateVotes", User, currentIndex);
+      await PartialSubmission_Model.findOneAndUpdate(
+        { assignmentId: AssingmentId, _id: UpdateSubmission._id },
+        { $set: { Questions: UpdateSubmission.Questions } },
+        { new: true }
+      );
+    }
+  );
+
+  socket.on(
+    "SubmissionVote",
+    async (SocketGroup, User, AssingmentId, UpdateSubmission) => {
+      if (UpdateSubmission.SubmissionVote.length >= 2) {
+        socket.to(SocketGroup).emit("UpdateSubmissionVote", User, true);
+        socket.emit("UpdateSubmissionVote", User, true);
+        await PartialSubmission_Model.findOneAndUpdate(
+          { assignmentId: AssingmentId, _id: UpdateSubmission._id },
+          {
+            $set: {
+              SubmissionVote: UpdateSubmission.SubmissionVote,
+              status: "submitted",
+            },
+          },
+          { new: true }
+        );
+      } else {
+        socket.to(SocketGroup).emit("UpdateSubmissionVote", User, false);
+        socket.emit("UpdateSubmissionVote", User, false);
+        await PartialSubmission_Model.findOneAndUpdate(
+          { assignmentId: AssingmentId, _id: UpdateSubmission._id },
+          { $set: { SubmissionVote: UpdateSubmission.SubmissionVote } },
+          { new: true }
+        );
+      }
+    }
+  );
 
   socket.on("ResetVotes", (SocketGroup) => {
     socket.to(SocketGroup).emit("ResetVotesArray");
@@ -217,7 +227,6 @@ io.on("connection", (socket) => {
     io.emit("updateOnlineStatus", Object.keys(onlineUsers));
   });
 });
-
 
 const port = process.env.Port || 3000;
 server.listen(port, () => {
