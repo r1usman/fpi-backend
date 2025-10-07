@@ -5,11 +5,49 @@ const problemController = require('../controllers/singleProblemController');
 const { Protect } = require('../Middleware/AuthMiddleware');
 const { adminAccess } = require('../Middleware/AdminAccess');
 
+// ============================================
+// Personalized problem for Student 
+// ============================================
+/*
+- User’s past submissions 
+  (solved vs unsolved).
+
+- Skill level 
+  (if you store rating or solved stats per difficulty).
+
+- Tag preferences 
+  (e.g., if user solved many Graph problems, suggest DP problems).
+
+*/
+
+router.get('/personalized', Protect, problemController.getPersonalizedProblems);
+router.post("/bulk-insert", problemController.bulkInsertProblems);
+
+
+
+// ============================================
+// Problem searching and filtering
+// ============================================
+
+// =============================================== (Also need to add search by Tags)
+// Search by name 
+router.get('/search', problemController.searchProblems);
+
 // curl -X GET http://localhost:5000/api/problems
 router.get('/', problemController.getAllProblems);
 
 // curl -X GET http://localhost:5000/api/problems/68958f856f85ddae60d1a773
 router.get('/:id', problemController.getProblemById);
+
+// Filter by difficulty
+router.get('/filter/difficulty/:level', problemController.filterByDifficulty);
+
+// Filter by tags
+router.get('/filter/tags', problemController.filterByTags);
+
+// ============================================
+// Problem, Solution Addition by Admin
+// ============================================
 
 // Problems
 router.post("/", Protect, adminAccess, problemController.createProblem);

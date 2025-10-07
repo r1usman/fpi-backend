@@ -8,7 +8,6 @@ const upload = require("../Middleware/uploadMiddleware");
 const route = express.Router();
 const path = require("path");
 const fs = require("fs");
-const { log } = require("console");
 route.post("/Create", Protect, async (req, res) => {
     try {
         const { title } = req.body
@@ -176,7 +175,6 @@ route.get("/student", Protect, async (req, res) => {
             dueDate: { $gte: new Date() }
         });
 
-        // res.json(assignments)
         if (!assignments || assignments.length === 0) {
             return res.status(404).json({ message: "No assignments found for this student" });
         }
@@ -316,11 +314,13 @@ route.get("/Assingments/Count/By-day", Protect, async (req, res) => {
 route.get("/Result/:id", Protect, async (req, res) => {
     try {
         const Id = req.params.id
+        console.log();
+
         const AssingmentResult = await PartialSubmission_Model.findOne(
             {
                 assignmentId: Id,
                 Students: { $elemMatch: { _id: req.user._id } },
-                status: "graded"
+
 
             }
         )

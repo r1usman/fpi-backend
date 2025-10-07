@@ -159,8 +159,11 @@ router.get("/profile", Protect, async (req, res) => {
     if (!UserProfile) {
       res.status(404).json({ message: "User Not Found" });
     }
+    else {
+      res.json({ user: UserProfile });
 
-    res.json({ user: UserProfile });
+    }
+
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
