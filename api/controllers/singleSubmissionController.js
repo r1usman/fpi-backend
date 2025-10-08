@@ -163,9 +163,9 @@ const mongoose = require('mongoose');
 // =============================================================
 
 // My local
-const EXECUTE_URL = "http://localhost:2000/api/v2/execute";
-// const EXECUTE_URL = "http://51.21.181.78:2000/api/v2/execute";
-
+// const EXECUTE_URL = "http://localhost:2000/api/v2/execute";
+// 
+const EXECUTE_URL = "http://51.20.42.114:2000/api/v2/execute";
 
 // exports.runCode = async (req, res) => {
 //   try {
