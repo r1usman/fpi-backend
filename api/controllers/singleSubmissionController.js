@@ -162,7 +162,21 @@ const mongoose = require('mongoose');
 
 // =============================================================
 
-const EXECUTE_URL = "http://51.21.181.78:2000/api/v2/execute";
+// My local
+const EXECUTE_URL = "http://localhost:2000/api/v2/execute";
+// const EXECUTE_URL = "http://51.21.181.78:2000/api/v2/execute";
+
+
+// exports.runCode = async (req, res) => {
+//   try {
+//     const response = await axios.post("http://piston:2000/api/v2/execute", req.body);
+//     res.json(response.data);
+//   } catch (err) {
+//     console.error("Execution error:", err.message);
+//     res.status(500).json({ error: "Execution failed" });
+//   }
+// };
+
 
 exports.createSubmission = async (req, res) => {
   try {
@@ -351,9 +365,7 @@ show all passed testcases on screen
 exports.getSubmission = async (req, res) => {
   try {
     // match the correct field from your Submission schema
-    const submissions = await Submission.find({ user: req.user._id })
-      .populate("problem", "title difficulty") // optional: show problem info
-      .populate("user", "name email");         // optional: show student info
+    const submissions = await Submission.find({ user: req.user._id }).populate("problem", "name difficulty tags")
     res.json(submissions);
   } catch (err) {
     res.status(500).json({ error: err.message });
