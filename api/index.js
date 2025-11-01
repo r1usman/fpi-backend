@@ -23,7 +23,8 @@ const SubmissionRoutes = require("./routes/SubmissionRoutes.js");
 
 const SingleProblemRoutes = require("./routes/singleProblemRoute.js");
 const SingleSubmissionRoutes = require("./routes/singleSubmissionRoute.js");
-// const badgeRoutes = require("./routes/badgeRoutes");
+const SingleUserRoutes = require("./routes/singleUserRoute.js");
+const badgeRoutes = require("./routes/badgeRoutes.js");
 // const certificationRoutes = require("./routes/certificationRoutes");
 
 dotenv.config();
@@ -92,7 +93,8 @@ app.use("/Code", SubmissionRoutes);
 // Problem Routes
 app.use("/api/problems", SingleProblemRoutes);
 app.use("/api/submissions", SingleSubmissionRoutes);
-// app.use("/api/badges", badgeRoutes);
+app.use("/api/user", SingleUserRoutes);
+app.use("/api/badges", badgeRoutes);
 // app.use("/api/certifications", certificationRoutes);
 
 app.get("/", async (req, res) => {

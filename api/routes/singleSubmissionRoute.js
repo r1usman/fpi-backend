@@ -3,6 +3,13 @@ const router = express.Router();
 const submissionController = require('../controllers/singleSubmissionController.js');
 const { Protect } = require('../Middleware/AuthMiddleware');
 
+// ============================================
+// Submission Stats
+router.get('/stats', submissionController.getSubmissionStats);
+
+// ============================================
+
+
 /* ======================= Submission with no time
 {
   "language": "python",

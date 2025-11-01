@@ -1,6 +1,31 @@
 const Problem = require("../models/SingleProblem");
 const Solution = require("../models/SingleSolution");
 
+// Get total problems per difficulty
+exports.getProblemStats = async (req, res) => {
+  try {
+    const validDifficulties = ["EASY", "MEDIUM", "HARD", "MEDIUM_HARD", "VERY_HARD"];
+
+    // Count for each difficulty
+    const counts = {};
+    for (const level of validDifficulties) {
+      counts[level] = await Problem.countDocuments({ difficulty: level });
+    }
+
+    // Total count (sum of all)
+    const total = Object.values(counts).reduce((sum, c) => sum + c, 0);
+
+    res.json({
+      ...counts,
+      TOTAL: total
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch problem stats" });
+  }
+};
+
+
 
 exports.bulkInsertProblems = async (req, res) => {
   try {
