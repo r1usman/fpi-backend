@@ -8,8 +8,9 @@ const modelName = "gemini-2.5-flash-preview-05-20";
 const baseApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
 const systemInstruction = "You are a highly concise assistant. Answer the user's question in a single, short sentence. Do not elaborate.";
+const { blogPostIdeasPrompt, blogSummaryPrompt } = require("../utils/Help")
 
-async function queryGemini(prompt) {
+async function queryGemini(prompt, type) {
     if (!apiKey) {
         throw new Error("API Key is missing. Please set the 'apiKey' variable.");
     }
@@ -23,7 +24,7 @@ async function queryGemini(prompt) {
         }],
         systemInstruction: {
             parts: [{
-                text: systemInstruction
+                text: type ? "" : systemInstruction
             }]
         },
         generationConfig: {
@@ -88,6 +89,71 @@ route.post('/', async (req, res) => {
         res.status(500).json({ error: "Failed to process query.", details: error.message });
     }
 });
+
+route.post("/Ideas", async (req, res) => {
+    try {
+        const { topics } = req.body;
+
+        if (!topics) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const prompt = blogPostIdeasPrompt(topics);
+
+        // const response = await ai
+        //     .getGenerativeModel({ model: "gemini-2.0-flash-lite" })
+        //     .generateContent(prompt);
+
+
+
+        const rawText = await queryGemini(prompt);
+
+        // Clean output: remove markdown formatting or code fences
+        const cleanedText = rawText
+            .replace(/^```json\s*/i, "") // remove starting ```json
+            .replace(/```$/i, "")        // remove ending ```
+            .trim();
+
+        // Parse safely
+        const data = JSON.parse(cleanedText);
+
+        res.status(200).json(data);
+    } catch (error) {
+        console.error("Error generating blog post ideas:", error);
+        res.status(500).json({
+            message: "Failed to generate blog post ideas",
+            error: error.message,
+        });
+    }
+
+})
+
+route.post("/Blog", async (req, res) => {
+    try {
+        const { title, tone } = req.body;
+
+        if (!title || !tone) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const prompt = `
+      Write a markdown-formatted blog post titled "${title}".
+      Use a ${tone} tone.
+      Include an introduction, subheadings, code examples if relevant and conclusion.
+      Make it SEO-friendly, readable, and engaging.
+    `;
+
+        const rawText = await queryGemini(prompt, "Blog");
+
+        res.status(200).json({ content: rawText });
+    } catch (error) {
+        console.error("Blog generation error:", error);
+        res.status(500).json({
+            message: "Failed to generate blog post",
+            error: error.message,
+        });
+    }
+})
 
 
 module.exports = route
