@@ -23,12 +23,16 @@ const SubmissionRoutes = require("./routes/SubmissionRoutes.js");
 
 const SingleProblemRoutes = require("./routes/singleProblemRoute.js");
 const SingleSubmissionRoutes = require("./routes/singleSubmissionRoute.js");
+
 const DefaultCourse = require("./models/CourseCategory_Model.js")
 const DefaultCourseRouter = require("./routes/CoursesCategory_Routes.js")
 const CourseScraping = require("./routes/CourseScarphing.js")
 const BlogSchema = require("./models/Blog_Schema.js")
 const BlogRouter = require("./routes/BlogRouter.js")
 // const badgeRoutes = require("./routes/badgeRoutes");
+const SingleUserRoutes = require("./routes/singleUserRoute.js");
+const badgeRoutes = require("./routes/badgeRoutes.js");
+
 // const certificationRoutes = require("./routes/certificationRoutes");
 
 
@@ -100,7 +104,8 @@ app.use("/Blog", BlogRouter);
 // Problem Routes
 app.use("/api/problems", SingleProblemRoutes);
 app.use("/api/submissions", SingleSubmissionRoutes);
-// app.use("/api/badges", badgeRoutes);
+app.use("/api/user", SingleUserRoutes);
+app.use("/api/badges", badgeRoutes);
 // app.use("/api/certifications", certificationRoutes);
 
 app.get("/", async (req, res) => {

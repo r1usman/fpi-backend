@@ -1,8 +1,21 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const { markProblemSolved } = require("../controllers/submissionController");
-const auth = require("../middleware/authMiddleware");
+const badgeController = require('../controllers/badgeController');
 
-router.post("/solve", auth, markProblemSolved);
+const { Protect } = require('../Middleware/AuthMiddleware');
+
+// Protected routes (require authentication)
+router.get('/my-badges', Protect, badgeController.getUserBadges);
+
+router.post('/check', Protect, badgeController.checkUserBadges);
+
+router.get('/user/:userId', Protect, badgeController.getUserBadges);
+router.post('/check/:userId', Protect, badgeController.checkUserBadges);
+
+
+// Badge management routes
+router.post('/seed', badgeController.seedBadges);
+router.get('/all', badgeController.getAllBadges);
+
 
 module.exports = router;
