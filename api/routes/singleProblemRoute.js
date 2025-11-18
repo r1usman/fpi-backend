@@ -6,6 +6,12 @@ const { Protect } = require('../Middleware/AuthMiddleware');
 const { adminAccess } = require('../Middleware/AdminAccess');
 
 // ============================================
+// Problem Stats 
+// ============================================
+
+router.get('/stats', problemController.getProblemStats);
+
+// ============================================
 // Personalized problem for Student 
 // ============================================
 /*

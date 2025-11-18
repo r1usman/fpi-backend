@@ -262,7 +262,6 @@ router.get("/ranking/:challengeId", async (req, res) => {
             return new Date(a.createdAt) - new Date(b.createdAt);
         });
 
-        // Step 3: Add rank
         const ranked = submissions.map((s, i) => ({
             rank: i + 1,
             studentID: s.studentID,

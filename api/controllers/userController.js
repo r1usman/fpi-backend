@@ -66,5 +66,5 @@ module.exports = {
   test,
   updateUser,
   deleteUser,
-  getUser,
+  getUser
 };
