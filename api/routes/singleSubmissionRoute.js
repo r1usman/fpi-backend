@@ -5,7 +5,7 @@ const { Protect } = require('../Middleware/AuthMiddleware');
 
 // ============================================
 // Submission Stats
-router.get('/stats', submissionController.getSubmissionStats);
+// router.get('/stats', submissionController.getSubmissionStats);
 
 // ============================================
 

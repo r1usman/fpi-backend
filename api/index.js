@@ -32,7 +32,7 @@ const BlogRouter = require("./routes/BlogRouter.js")
 // const badgeRoutes = require("./routes/badgeRoutes");
 const SingleUserRoutes = require("./routes/singleUserRoute.js");
 const badgeRoutes = require("./routes/badgeRoutes.js");
-
+const aiProblemRoutes = require('./routes/aiProblemRoutes');
 // const certificationRoutes = require("./routes/certificationRoutes");
 
 
@@ -106,6 +106,7 @@ app.use("/api/problems", SingleProblemRoutes);
 app.use("/api/submissions", SingleSubmissionRoutes);
 app.use("/api/user", SingleUserRoutes);
 app.use("/api/badges", badgeRoutes);
+app.use('/api/ai-problems', aiProblemRoutes);
 // app.use("/api/certifications", certificationRoutes);
 
 app.get("/", async (req, res) => {
