@@ -35,6 +35,7 @@ const badgeRoutes = require("./routes/badgeRoutes.js");
 const CommentSchema = require("./models/CommentSchema.js");
 const CommentRoutes = require("./routes/CommentRoutes.js");
 
+const aiProblemRoutes = require('./routes/aiProblemRoutes');
 // const certificationRoutes = require("./routes/certificationRoutes");
 
 
@@ -111,7 +112,11 @@ app.use("/api/problems", SingleProblemRoutes);
 app.use("/api/submissions", SingleSubmissionRoutes);
 app.use("/api/user", SingleUserRoutes);
 app.use("/api/badges", badgeRoutes);
+<<<<<<< HEAD
 
+=======
+app.use('/api/ai-problems', aiProblemRoutes);
+>>>>>>> 56ddcd9fbc1d337fe6a0e2e883e778fc0412a606
 // app.use("/api/certifications", certificationRoutes);
 
 app.get("/", async (req, res) => {
