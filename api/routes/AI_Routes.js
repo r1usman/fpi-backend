@@ -1,10 +1,10 @@
-
 const express = require('express');
 const route = express.Router();
 const dotenv = require("dotenv");
 dotenv.config();
 const apiKey = process.env.GEMINI_API_KEY
-const modelName = "gemini-2.5-flash-preview-05-20";
+// FIX: Changed the deprecated preview model name to the current stable model name to resolve the 404 error.
+const modelName = "gemini-2.5-flash";
 const baseApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
 const systemInstruction = "You are a highly concise assistant. Answer the user's question in a single, short sentence. Do not elaborate.";
@@ -101,8 +101,8 @@ route.post("/Ideas", async (req, res) => {
         const prompt = blogPostIdeasPrompt(topics);
 
         // const response = await ai
-        //     .getGenerativeModel({ model: "gemini-2.0-flash-lite" })
-        //     .generateContent(prompt);
+        //     .getGenerativeModel({ model: "gemini-2.0-flash-lite" })
+        //     .generateContent(prompt);
 
 
 
@@ -111,7 +111,7 @@ route.post("/Ideas", async (req, res) => {
         // Clean output: remove markdown formatting or code fences
         const cleanedText = rawText
             .replace(/^```json\s*/i, "") // remove starting ```json
-            .replace(/```$/i, "")        // remove ending ```
+            .replace(/```$/i, "")        // remove ending ```
             .trim();
 
         // Parse safely
@@ -137,11 +137,11 @@ route.post("/Blog", async (req, res) => {
         }
 
         const prompt = `
-      Write a markdown-formatted blog post titled "${title}".
-      Use a ${tone} tone.
-      Include an introduction, subheadings, code examples if relevant and conclusion.
-      Make it SEO-friendly, readable, and engaging.
-    `;
+      Write a markdown-formatted blog post titled "${title}".
+      Use a ${tone} tone.
+      Include an introduction, subheadings, code examples if relevant and conclusion.
+      Make it SEO-friendly, readable, and engaging.
+    `;
 
         const rawText = await queryGemini(prompt, "Blog");
 
@@ -154,6 +154,31 @@ route.post("/Blog", async (req, res) => {
         });
     }
 })
+
+
+route.post("/PostSummary", async (req, res) => {
+    try {
+        const { content } = req.body;
+        if (!content) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const prompt = blogSummaryPrompt(content);
+        const rawText = await queryGemini(prompt);
+        const cleanedText = rawText
+            .replace(/^```json\s*/, "") // remove starting ```json
+            .replace(/```$/, "") // remove ending ```
+            .trim(); // remove extra space
+        const data = JSON.parse(cleanedText);
+        res.status(200).json(data);
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to generate blog post summary",
+            error: error.message,
+        });
+    }
+})
+
 
 
 module.exports = route

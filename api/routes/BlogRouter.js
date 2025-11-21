@@ -4,6 +4,7 @@ const route = express.Router();
 const BlogPost = require("../models/Blog_Schema")
 
 
+
 route.post("/create", async (req, res) => {
     try {
         const { title, content, coverImageUrl, tags, isDraft, generatedByAI, BelongTo } = req.body;
@@ -36,8 +37,6 @@ route.post("/create", async (req, res) => {
     }
 });
 
-
-const router = express.Router();
 
 route.put("/update/:id", async (req, res) => {
     try {
@@ -189,7 +188,7 @@ route.get("/slug/:slug", async (req, res) => {
 });
 
 
-router.get("/tag/:tag", async (req, res) => {
+route.get("/tag/:tag", async (req, res) => {
     try {
         const posts = await BlogPost.find({
             tags: req.params.tag,
@@ -203,25 +202,40 @@ router.get("/tag/:tag", async (req, res) => {
 });
 
 
-router.get("/search", async (req, res) => {
-    try {
-        const q = req.query.q;
 
-        const posts = await BlogPost.find({
-            isDraft: false,
-            $or: [
-                { title: { $regex: q, $options: "i" } },
-                { content: { $regex: q, $options: "i" } },
-            ],
-        }).populate("name profileImageUrl");
+
+route.get("/search", async (req, res) => {
+    try {
+        const { q, courseId } = req.query;
+
+        if (!courseId) {
+            return res.status(400).json({ message: "courseId is required" });
+        }
+
+        const filter = {
+            BelongTo: courseId,
+            isDraft: false
+        };
+
+        if (q && q.trim() !== "") {
+            filter.title = { $regex: q, $options: "i" };
+        }
+
+        const posts = await BlogPost.find(filter)
+            .select("title _id slug")
+            .sort({ createdAt: -1 });
 
         res.json(posts);
+
     } catch (err) {
         res.status(500).json({ message: "Server Error", error: err.message });
     }
 });
 
-router.put("/increment-view/:id", async (req, res) => {
+
+
+
+route.put("/increment-view/:id", async (req, res) => {
     try {
         await BlogPost.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
         res.json({ message: "View count incremented" });
@@ -231,14 +245,21 @@ router.put("/increment-view/:id", async (req, res) => {
 });
 
 
-router.put("/like/:id", async (req, res) => {
+route.put("/like/:id", async (req, res) => {
     try {
-        await BlogPost.findByIdAndUpdate(req.params.id, { $inc: { likes: 1 } });
-        res.json({ message: "Like added" });
+        const updatedPost = await BlogPost.findByIdAndUpdate(
+            req.params.id,
+            { $inc: { likes: 1 } },
+            { new: true }
+        );
+
+        res.json({ likes: updatedPost.likes });
     } catch (err) {
         res.status(500).json({ message: "Server Error", error: err.message });
     }
 });
+
+
 
 
 module.exports = route; 
