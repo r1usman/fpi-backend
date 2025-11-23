@@ -4,10 +4,6 @@ const Comment = require("../models/CommentSchema");
 const BlogPost = require("../models/Blog_Schema");
 const { GenerateToken, VerifyToken, Protect } = require("../utils/Token");
 
-// -----------------------------------------------------
-// ADD COMMENT
-// POST /api/comments/:postId
-// -----------------------------------------------------
 
 router.get("/Dashboard", async (req, res) => {
     try {
@@ -88,6 +84,43 @@ router.get("/Dashboard", async (req, res) => {
 });
 
 
+router.get("/", Protect, async (req, res) => {
+    try {
+
+        const comments = await Comment.find({})
+            .populate("author", "name profileImage status")
+            .populate("post", "title coverImageUrl")
+            .sort({ createdAt: -1 });
+
+        const commentMap = {};
+        const commentObjects = comments.map((c) => {
+            const obj = c.toObject();
+            obj.replies = [];
+            commentMap[obj._id] = obj;
+            return obj;
+        });
+
+
+        const nestedComments = [];
+
+        commentObjects.forEach((comment) => {
+            if (comment.parentComment) {
+                const parent = commentMap[comment.parentComment];
+                if (parent) parent.replies.push(comment);
+            } else {
+                nestedComments.push(comment);
+            }
+        });
+
+        res.json(nestedComments);
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to fetch comments",
+            error: error.message,
+        });
+    }
+})
+
 router.post("/:postId", Protect, async (req, res) => {
     try {
         const { postId } = req.params;
@@ -120,7 +153,7 @@ router.get("/post/:postId", Protect, async (req, res) => {
         const { postId } = req.params;
 
         const comments = await Comment.find({ post: postId })
-            .populate("author", "name profileImage")
+            .populate("author", "name profileImage status")
             .populate("post", "title coverImageUrl")
             .sort({ createdAt: 1 });
 
