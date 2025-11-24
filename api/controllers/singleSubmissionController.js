@@ -1,9 +1,9 @@
 // controllers/singleSubmissionController.js
-const User = require('../models/user.model'); // adjust path if needed
-const Problem = require('../models/SingleProblem');
-const Submission = require('../models/SingleSubmission');
-const axios = require('axios');
-const mongoose = require('mongoose');
+const User = require("../models/user.model"); // adjust path if needed
+const Problem = require("../models/SingleProblem");
+const Submission = require("../models/SingleSubmission");
+const axios = require("axios");
+const mongoose = require("mongoose");
 
 const JUDGE0_API = "https://judge0-ce.p.rapidapi.com";
 const RAPIDAPI_KEY = process.env.J0_API;
@@ -13,12 +13,23 @@ const languageMap = {
   python: 71,
   java: 62,
   javascript: 63,
-  cpp: 54
+  cpp: 54,
 };
 
 exports.createSubmission = async (req, res) => {
   try {
-    const { language, version, code, problemId, startedAt, endedAt, elapsedTimeMs } = req.body;
+    const {
+      language,
+      version,
+      code,
+      problemId,
+      startedAt,
+      endedAt,
+      elapsedTimeMs,
+    } = req.body;
+
+    console.log("Aubmission reached backend");
+    console.log(req.body);
 
     // validate problem
     const problem = await Problem.findById(problemId);
@@ -42,7 +53,7 @@ exports.createSubmission = async (req, res) => {
         // Normalize input
         let stdinValue;
         if (Array.isArray(tc.input)) {
-          stdinValue = tc.input.map(v => String(v).trim()).join("\n");
+          stdinValue = tc.input.map((v) => String(v).trim()).join("\n");
         } else {
           stdinValue = String(tc.input).trim();
         }
@@ -54,14 +65,14 @@ exports.createSubmission = async (req, res) => {
             language_id: languageId,
             source_code: code,
             stdin: stdinValue,
-            expected_output: String(tc.output || "").trim()
+            expected_output: String(tc.output || "").trim(),
           },
           {
             headers: {
               "Content-Type": "application/json",
               "X-RapidAPI-Key": RAPIDAPI_KEY,
-              "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com"
-            }
+              "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com",
+            },
           }
         );
 
@@ -87,9 +98,13 @@ exports.createSubmission = async (req, res) => {
           output,
           passed,
           executionTime: submission.time ?? null,
-          memory: submission.memory ?? null,              // NEW
+          memory: submission.memory ?? null, // NEW
           statusDescription: submission.status?.description, // NEW
-          error: submission.stderr || submission.compile_output || submission.message || null,
+          error:
+            submission.stderr ||
+            submission.compile_output ||
+            submission.message ||
+            null,
         });
 
         // if (submission.time) totalExecutionTime += submission.time;
@@ -98,7 +113,6 @@ exports.createSubmission = async (req, res) => {
           const execTimeNum = parseFloat(submission.time);
           if (!isNaN(execTimeNum)) totalExecutionTime += execTimeNum;
         }
-
       } catch (error) {
         allPassed = false;
         // results.push({
@@ -115,9 +129,13 @@ exports.createSubmission = async (req, res) => {
           output,
           passed,
           executionTime: submission.time ?? null,
-          memory: submission.memory ?? null,              // NEW
+          memory: submission.memory ?? null, // NEW
           statusDescription: submission.status?.description, // NEW
-          error: submission.stderr || submission.compile_output || submission.message || null,
+          error:
+            submission.stderr ||
+            submission.compile_output ||
+            submission.message ||
+            null,
         });
       }
     }
@@ -125,11 +143,16 @@ exports.createSubmission = async (req, res) => {
     const status = allPassed ? "accepted" : "rejected";
 
     // compute elapsedTimeMs if not provided but startedAt and endedAt are present
-    let computedElapsedMs = typeof elapsedTimeMs === "number" ? elapsedTimeMs : undefined;
-    if ((computedElapsedMs === undefined) && startedAt && endedAt) {
+    let computedElapsedMs =
+      typeof elapsedTimeMs === "number" ? elapsedTimeMs : undefined;
+    if (computedElapsedMs === undefined && startedAt && endedAt) {
       const s = new Date(startedAt);
       const e = new Date(endedAt);
-      if (!isNaN(s.getTime()) && !isNaN(e.getTime()) && e.getTime() >= s.getTime()) {
+      if (
+        !isNaN(s.getTime()) &&
+        !isNaN(e.getTime()) &&
+        e.getTime() >= s.getTime()
+      ) {
         computedElapsedMs = e.getTime() - s.getTime();
       }
     }
@@ -159,7 +182,9 @@ exports.createSubmission = async (req, res) => {
       if (status === "accepted") {
         // --- 1) Check if problem already solved (before making any changes) ---
         const probIdStr = problem._id.toString();
-        const alreadySolved = (user.solvedProblems || []).some(id => id.toString() === probIdStr);
+        const alreadySolved = (user.solvedProblems || []).some(
+          (id) => id.toString() === probIdStr
+        );
 
         console.log("Problem ID:", probIdStr);
         console.log("Already solved?", alreadySolved);
@@ -177,7 +202,7 @@ exports.createSubmission = async (req, res) => {
             MEDIUM: 0,
             MEDIUM_HARD: 0,
             HARD: 0,
-            VERY_HARD: 0
+            VERY_HARD: 0,
           };
 
           // Get problem difficulty and increment the count
@@ -185,8 +210,14 @@ exports.createSubmission = async (req, res) => {
           console.log("Incrementing difficulty:", difficulty);
 
           if (difficulty && user.solvedCounts.hasOwnProperty(difficulty)) {
-            user.solvedCounts[difficulty] = (user.solvedCounts[difficulty] || 0) + 1;
-            console.log("New count for", difficulty, ":", user.solvedCounts[difficulty]);
+            user.solvedCounts[difficulty] =
+              (user.solvedCounts[difficulty] || 0) + 1;
+            console.log(
+              "New count for",
+              difficulty,
+              ":",
+              user.solvedCounts[difficulty]
+            );
           }
 
           // Increment totalSolved
@@ -196,28 +227,41 @@ exports.createSubmission = async (req, res) => {
 
         // --- 3) Update preferredTags (always update on accepted submission) ---
         user.preferredTags = user.preferredTags || [];
-        user.preferredTags = user.preferredTags.map(t =>
+        user.preferredTags = user.preferredTags.map((t) =>
           typeof t === "string" ? { tag: t, count: 1 } : t
         );
 
         const problemTags = Array.isArray(problem.tags) ? problem.tags : [];
         for (const tag of problemTags) {
           const idx = user.preferredTags.findIndex(
-            t => t.tag.toLowerCase() === tag.toLowerCase()
+            (t) => t.tag.toLowerCase() === tag.toLowerCase()
           );
           if (idx === -1) {
             user.preferredTags.push({ tag, count: 1 });
           } else {
-            user.preferredTags[idx].count = (user.preferredTags[idx].count || 0) + 1;
+            user.preferredTags[idx].count =
+              (user.preferredTags[idx].count || 0) + 1;
           }
         }
 
         // --- 4) Recalculate preferred difficulty ---
-        const difficultyMap = { EASY: 1, MEDIUM: 2, MEDIUM_HARD: 3, HARD: 4, VERY_HARD: 5 };
-        const reverseMap = { 1: "EASY", 2: "MEDIUM", 3: "MEDIUM_HARD", 4: "HARD", 5: "VERY_HARD" };
+        const difficultyMap = {
+          EASY: 1,
+          MEDIUM: 2,
+          MEDIUM_HARD: 3,
+          HARD: 4,
+          VERY_HARD: 5,
+        };
+        const reverseMap = {
+          1: "EASY",
+          2: "MEDIUM",
+          3: "MEDIUM_HARD",
+          4: "HARD",
+          5: "VERY_HARD",
+        };
 
         const solvedIds = (user.solvedProblems || []).map(
-          id => new mongoose.Types.ObjectId(id)
+          (id) => new mongoose.Types.ObjectId(id)
         );
         if (solvedIds.length > 0) {
           const solvedDocs = await Problem.find(
@@ -230,7 +274,8 @@ exports.createSubmission = async (req, res) => {
           }, 0);
           const avg = totalScore / solvedDocs.length;
           const rounded = Math.round(avg);
-          user.preferredDifficulty = reverseMap[rounded] || user.preferredDifficulty || "EASY";
+          user.preferredDifficulty =
+            reverseMap[rounded] || user.preferredDifficulty || "EASY";
         }
       }
 
@@ -239,7 +284,7 @@ exports.createSubmission = async (req, res) => {
         solvedProblems: user.solvedProblems?.length,
         solvedCounts: user.solvedCounts,
         totalSolved: user.totalSolved,
-        preferredTags: user.preferredTags
+        preferredTags: user.preferredTags,
       });
 
       await user.save();
@@ -256,20 +301,21 @@ exports.createSubmission = async (req, res) => {
 exports.getSubmission = async (req, res) => {
   try {
     // match the correct field from your Submission schema
-    const submissions = await Submission.find({ user: req.user._id }).populate("problem", "name difficulty tags")
+    const submissions = await Submission.find({ user: req.user._id }).populate(
+      "problem",
+      "name difficulty tags"
+    );
     res.json(submissions);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-
-
 exports.getSubmissionById = async (req, res) => {
   const submission = await Submission.findById(req.params.id);
   console.log(submission);
   res.json(submission);
-}
+};
 
 exports.updateSubmission = async (req, res) => {
   const { note } = req.body;
@@ -280,13 +326,11 @@ exports.updateSubmission = async (req, res) => {
   await submission.save();
 
   res.json({ message: "Updated", submission });
-}
-
+};
 
 // =============================================================
 
 // const EXECUTE_URL = "http://localhost:2000/api/v2/execute";
-
 
 // exports.createSubmission = async (req, res) => {
 //   try {
@@ -469,11 +513,11 @@ exports.updateSubmission = async (req, res) => {
 //         // --- 1) Check if problem already solved (before making any changes) ---
 //         const probIdStr = problem._id.toString();
 //         const alreadySolved = (user.solvedProblems || []).some(id => id.toString() === probIdStr);
-        
+
 //         console.log("Problem ID:", probIdStr);
 //         console.log("Already solved?", alreadySolved);
 //         console.log("Problem difficulty:", problem.difficulty);
-        
+
 //         // --- 2) If first time solving, update solvedProblems and counts ---
 //         if (!alreadySolved) {
 //           // Add to solvedProblems
@@ -492,7 +536,7 @@ exports.updateSubmission = async (req, res) => {
 //           // Get problem difficulty and increment the count
 //           const difficulty = problem.difficulty;
 //           console.log("Incrementing difficulty:", difficulty);
-          
+
 //           if (difficulty && user.solvedCounts.hasOwnProperty(difficulty)) {
 //             user.solvedCounts[difficulty] = (user.solvedCounts[difficulty] || 0) + 1;
 //             console.log("New count for", difficulty, ":", user.solvedCounts[difficulty]);

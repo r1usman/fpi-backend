@@ -1,14 +1,13 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const submissionController = require('../controllers/singleSubmissionController.js');
-const { Protect } = require('../Middleware/AuthMiddleware');
+const submissionController = require("../controllers/singleSubmissionController.js");
+const { Protect } = require("../utils/Token.js");
 
 // ============================================
 // Submission Stats
 // router.get('/stats', submissionController.getSubmissionStats);
 
 // ============================================
-
 
 /* ======================= Submission with no time
 {
@@ -42,20 +41,20 @@ const { Protect } = require('../Middleware/AuthMiddleware');
 }
 
 */
-router.post('/', Protect, submissionController.createSubmission);
+router.post("/", Protect, submissionController.createSubmission);
 
 /*GET http://localhost:5000/api/submissions */
-router.get('/', Protect, submissionController.getSubmission);
+router.get("/", Protect, submissionController.getSubmission);
 
 /*http://localhost:5000/api/submissions/689f942e3b3659f0952d172a*/
-router.get('/:id', Protect, submissionController.getSubmissionById);
+router.get("/:id", Protect, submissionController.getSubmissionById);
 
 /*PUT http://localhost:5000/api/submissions/689f942e3b3659f0952d172a \
 '{
   "note": "This is my updated note"
 }'
 */
-router.put('/:id', Protect, submissionController.updateSubmission);
+router.put("/:id", Protect, submissionController.updateSubmission);
 
 module.exports = router;
 
@@ -94,7 +93,7 @@ curl -X PUT http://localhost:5000/api/submissions/689f942e3b3659f0952d172a \
 
 // (I)    Take another example and test piston api
 // (II)   Now have to make user points system and leaderboard
-// - Rank 
+// - Rank
 // - badges
 
 // (III)  Contest system

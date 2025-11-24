@@ -18,7 +18,7 @@ export async function handleDedupe(req, res) {
     }
 
     // dedupeQuestions already coerces items to strings; we keep original order
-    const unique_queries = await dedupeQuestions(queries, { threshold: 0.52 });
+    const unique_queries = await dedupeQuestions(queries, { threshold: 0.47 });
     return res.json({ unique_queries });
   } catch (err) {
     console.error("/api/dedupe failed:", err);
