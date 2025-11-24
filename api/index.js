@@ -32,6 +32,9 @@ const BlogRouter = require("./routes/BlogRouter.js")
 // const badgeRoutes = require("./routes/badgeRoutes");
 const SingleUserRoutes = require("./routes/singleUserRoute.js");
 const badgeRoutes = require("./routes/badgeRoutes.js");
+const CommentSchema = require("./models/CommentSchema.js");
+const CommentRoutes = require("./routes/CommentRoutes.js");
+
 const aiProblemRoutes = require('./routes/aiProblemRoutes');
 // const certificationRoutes = require("./routes/certificationRoutes");
 
@@ -101,6 +104,9 @@ app.use("/Code", SubmissionRoutes);
 app.use("/Default", DefaultCourseRouter);
 app.use("/Scrap", CourseScraping);
 app.use("/Blog", BlogRouter);
+app.use("/Comment", CommentRoutes);
+
+
 // Problem Routes
 app.use("/api/problems", SingleProblemRoutes);
 app.use("/api/submissions", SingleSubmissionRoutes);

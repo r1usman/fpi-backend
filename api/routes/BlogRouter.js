@@ -1,7 +1,9 @@
 const express = require("express")
 
 const route = express.Router();
-const BlogPost = require("../models/Blog_Schema")
+const BlogPost = require("../models/Blog_Schema");
+const { Protect } = require("../utils/Token");
+
 
 
 route.post("/create", async (req, res) => {
@@ -36,8 +38,6 @@ route.post("/create", async (req, res) => {
     }
 });
 
-
-const router = express.Router();
 
 route.put("/update/:id", async (req, res) => {
     try {
@@ -189,7 +189,7 @@ route.get("/slug/:slug", async (req, res) => {
 });
 
 
-router.get("/tag/:tag", async (req, res) => {
+route.get("/tag/:tag", async (req, res) => {
     try {
         const posts = await BlogPost.find({
             tags: req.params.tag,
@@ -203,25 +203,40 @@ router.get("/tag/:tag", async (req, res) => {
 });
 
 
-router.get("/search", async (req, res) => {
-    try {
-        const q = req.query.q;
 
-        const posts = await BlogPost.find({
-            isDraft: false,
-            $or: [
-                { title: { $regex: q, $options: "i" } },
-                { content: { $regex: q, $options: "i" } },
-            ],
-        }).populate("name profileImageUrl");
+
+route.get("/search", async (req, res) => {
+    try {
+        const { q, courseId } = req.query;
+
+        if (!courseId) {
+            return res.status(400).json({ message: "courseId is required" });
+        }
+
+        const filter = {
+            BelongTo: courseId,
+            isDraft: false
+        };
+
+        if (q && q.trim() !== "") {
+            filter.title = { $regex: q, $options: "i" };
+        }
+
+        const posts = await BlogPost.find(filter)
+            .select("title _id slug")
+            .sort({ createdAt: -1 });
 
         res.json(posts);
+
     } catch (err) {
         res.status(500).json({ message: "Server Error", error: err.message });
     }
 });
 
-router.put("/increment-view/:id", async (req, res) => {
+
+
+
+route.put("/increment-view/:id", async (req, res) => {
     try {
         await BlogPost.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
         res.json({ message: "View count incremented" });
@@ -231,14 +246,64 @@ router.put("/increment-view/:id", async (req, res) => {
 });
 
 
-router.put("/like/:id", async (req, res) => {
+// route.put("/like/:id", async (req, res) => {
+//     try {
+//         const updatedPost = await BlogPost.findByIdAndUpdate(
+//             req.params.id,
+//             { $inc: { likes: 1 } },
+//             { new: true }
+//         );
+
+//         res.json({ likes: updatedPost.likes });
+//     } catch (err) {
+//         res.status(500).json({ message: "Server Error", error: err.message });
+//     }
+// }); 
+
+route.put("/like/:id", Protect, async (req, res) => {
     try {
-        await BlogPost.findByIdAndUpdate(req.params.id, { $inc: { likes: 1 } });
-        res.json({ message: "Like added" });
+        const userId = req.user._id;
+        const post = await BlogPost.findById(req.params.id);
+
+        if (!post) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+
+        let liked = false;
+
+        // REMOVE LIKE (User Already Liked)
+        if (post.likedBy.includes(userId)) {
+            post.likes -= 1;
+            post.likedBy = post.likedBy.filter(
+                id => id.toString() !== userId.toString()
+            );
+            liked = false;
+        }
+        // ADD LIKE
+        else {
+            post.likes += 1;
+            post.likedBy.push(userId);
+            liked = true;
+        }
+
+        await post.save();
+
+        // ⭐ Fetch fresh updated post (most accurate)
+        const updatedPost = await BlogPost.findById(req.params.id).select("likes likedBy");
+
+        return res.json({
+            liked,
+            likes: updatedPost.likes,      // ⭐ accurate total likes
+            likedBy: updatedPost.likedBy,  // optional: send updated array
+            message: liked ? "Post liked" : "Like removed"
+        });
+
     } catch (err) {
         res.status(500).json({ message: "Server Error", error: err.message });
     }
 });
+
+
 
 
 module.exports = route; 

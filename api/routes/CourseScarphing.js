@@ -37,24 +37,20 @@ function convertToMarkdown(contentBlocks) {
 }
 
 
-// Recursive function to parse content
-// Recursive function to parse content
+
 function parseElement($, el, blocks) {
     const tag = $(el).prop("tagName");
 
-    // Headings
     if (tag === "H1" || tag === "H2" || tag === "H3" || tag === "H4") {
         const heading = $(el).text().trim();
         if (heading) blocks.push({ type: "heading", data: heading });
     }
 
-    // Paragraphs / Text
     else if (tag === "P") {
         const text = $(el).text().trim();
         if (text) blocks.push({ type: "text", data: text });
     }
 
-    // Lists
     else if (tag === "UL" || tag === "OL") {
         const listItems = $(el)
             .find("li")
@@ -63,16 +59,13 @@ function parseElement($, el, blocks) {
         if (listItems.length) blocks.push({ type: "list", data: listItems });
     }
 
-    // Code blocks **replace your old code block handling with this**
     else if ($(el).hasClass("w3-code") || $(el).find(".w3-code").length > 0 || tag === "PRE" || $(el).find("pre").length > 0) {
         const code = $(el).text().trim();
-        // ✅ Filter out huge JSON/script blocks
         if (code && code.length < 500 && !code.startsWith("var ") && !code.startsWith("JSON.parse")) {
             blocks.push({ type: "code", data: code });
         }
     }
 
-    // Recursively process children
     $(el)
         .children()
         .each((i, child) => parseElement($, child, blocks));
@@ -100,10 +93,8 @@ route.post("/", async (req, res) => {
 
         const contentBlocks = [];
 
-        // Parse all children recursively to maintain order
         mainContent.children().each((i, el) => parseElement($, el, contentBlocks));
 
-        // Get title
         let title = $("h1").first().text().trim() || $("title").text().trim();
 
         return res.json({
@@ -137,7 +128,6 @@ route.get("/preview", async (req, res) => {
 
         let html = response.data;
 
-        // ✅ Optional: rewrite relative URLs so CSS & images load correctly
         const baseUrl = new URL(url).origin;
         html = html.replace(/(src|href)="\/(?!\/)/g, `$1="${baseUrl}/`);
 
