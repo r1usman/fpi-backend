@@ -182,6 +182,9 @@ const HandleTestcases = async (code, language, testCases) => {
 
 router.put("/Update/:id", Protect, async (req, res) => {
     try {
+
+        console.log("ID", req.params.id);
+
         let submission = await Submission_Model.findById(req.params.id);
 
         const ChallengeId = submission.challengeID;
