@@ -7,6 +7,8 @@ const {
   listCourses,
   listStudents,
   listCoursesByInstructor,
+  setCourseLiveTrue,
+  setCourseLiveFalse,
 } = require("../controllers/courseController");
 const { getResources, upload } = require("./resource/rec");
 const { Protect } = require("../utils/Token");
@@ -26,6 +28,8 @@ courseRouter.post("/cluster", handleDedupe);
 courseRouter.get("/instructor", Protect, listCoursesByInstructor);
 courseRouter.post("/add-student/:courseId", addStudentToCourse);
 courseRouter.post("/join/:courseId", joinCourse);
+courseRouter.post("/:courseId/live/start", setCourseLiveTrue);
+courseRouter.post("/:courseId/live/stop", setCourseLiveFalse);
 courseRouter.get("/:courseId", getCourse);
 
 module.exports = { courseRouter };
