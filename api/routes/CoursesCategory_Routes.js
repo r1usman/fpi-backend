@@ -9,6 +9,7 @@ route.get("/", (req, res) => {
     res.send("Hello")
 })
 
+
 route.post("/Create", async (req, res) => {
     try {
         const { title } = req.body
