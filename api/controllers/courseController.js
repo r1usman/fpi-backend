@@ -3,22 +3,21 @@ const User = require("../models/user.model.js");
 
 async function createCourse(req, res) {
   try {
-    const { title, instructorId, description, image } = req.body;
-    if (!title || !instructorId || !description || !image) {
+    const instructorId = req.user._id;
+    const { title } = req.body;
+    if (!title || !instructorId) {
       return res.status(400).json({ error: "Missing required fields" });
     }
     const instructorDoc = await User.findById(instructorId);
     if (!instructorDoc)
       return res.status(404).json({ error: "Instructor not found" });
-
     const course = await Course.create({
-      title,
       instructorId,
       instructor: instructorDoc.name,
-      description,
-      image,
+
       studentIds: [],
     });
+
     res.status(201).json(course);
   } catch (err) {
     res.status(500).json({ error: "Failed to create course" });
@@ -116,7 +115,6 @@ async function listCoursesByInstructor(req, res) {
       path: "studentIds",
       select: "name status",
     });
-    console.log(courses);
     res.json(courses);
   } catch (err) {
     console.error(err);
@@ -163,7 +161,8 @@ async function setCourseLiveFalse(req, res) {
 
 async function listCoursesByStudent(req, res) {
   try {
-    const studentId = (req.user && req.user._id) || req.params.studentId || req.query.studentId;
+    const studentId =
+      (req.user && req.user._id) || req.params.studentId || req.query.studentId;
     if (!studentId) {
       return res.status(400).json({ error: "Missing studentId" });
     }

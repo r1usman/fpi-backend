@@ -7,9 +7,9 @@ const courseSchema = new Schema(
     title: { type: String, required: true, trim: true },
     instructor: { type: String, required: true, trim: true },
     instructorId: { type: Types.ObjectId, ref: "User", required: true },
-    description: { type: String, required: true, trim: true },
+    description: { type: String, trim: true },
     studentIds: [{ type: Types.ObjectId, ref: "User" }],
-    image: { type: String, required: true, trim: true },
+    image: { type: String, trim: true },
     live: { type: Boolean, default: false },
   },
   { timestamps: true }
