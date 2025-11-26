@@ -50,6 +50,13 @@ const singleSubmissionSchema = new mongoose.Schema({
     ref: 'SingleProblem'
   },
 
+  problemType: {
+  type: String,
+  enum: ["SingleProblem", "aiProblem"],
+  required: true,
+},
+
+
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'

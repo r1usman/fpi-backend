@@ -1,240 +1,415 @@
+// const SingleProblem = require("../models/SingleProblem");
+// const AiProblem = require("../models/aiProblem");
+// const { HfInference } = require("@huggingface/inference");
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+// require("dotenv").config();
+
+// // Initialize HuggingFace Inference Client
+// const hf = new HfInference(process.env.HF_TOKEN);
+
+// // =========================================================
+// // 🔥 Helper: Call LLM to Generate Problem Variant
+// // =========================================================
+// async function callLLMToGenerateVariant(original) {
+//     const prompt = `Generate a competitive programming problem variant in valid JSON format.
+
+// ORIGINAL:
+// Name: ${original.name}
+// Difficulty: ${original.difficulty}
+// Description: ${original.description.substring(0, 500)}...
+// Tags: ${original.tags ? original.tags.join(", ") : "N/A"}
+
+// REQUIREMENTS:
+// - Same difficulty: ${original.difficulty}
+// - Different theme/story
+// - Same algorithmic approach
+// - NEW examples and test cases
+
+// OUTPUT (JSON only, no markdown):
+// {
+//   "problem": {
+//     "name": "string",
+//     "difficulty": "${original.difficulty}",
+//     "description": "string (be concise)",
+//     "input": "string",
+//     "output": "string",
+//     "note": "string",
+//     "tags": ["tag1", "tag2"],
+//     "examples": [{"input": "...", "output": "...", "explanation": "..."}],
+//     "expected_time_complexity": "O(...)",
+//     "expected_auxiliary_space": "O(...)",
+//     "time_limit": "1 second",
+//     "memory_limit": "256 MB"
+//   }
+// }`;
+
+// /*
+
+// - 4 solutions (Python, JavaScript, Java, C++)
+
+// ,
+//   "solutions": [
+//     {"language": "python", "code": "# solution"},
+//     {"language": "javascript", "code": "// solution"},
+//     {"language": "java", "code": "// solution"},
+//     {"language": "cpp", "code": "// solution"}
+//   ]
+
+// */
+
+//     function safeParseJson(raw) {
+//         let cleaned = raw.trim();
+//         // Remove markdown blocks
+//         cleaned = cleaned.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '');
+//         cleaned = cleaned.trim();
+        
+//         try {
+//             return JSON.parse(cleaned);
+//         } catch (e) {
+//             throw new Error(`JSON parse failed: ${e.message}`);
+//         }
+//     }
+
+//     // Models to try (smaller first for speed)
+//     const models = [
+//         "google/gemini-2.0-flash-exp",
+//         "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+//         "Qwen/Qwen2.5-7B-Instruct",
+//         "Qwen/Qwen2.5-72B-Instruct",
+//     ];
+
+//     const errors = [];
+
+//     for (const model of models) {
+//         try {
+//             console.log(`🤖 Trying model: ${model}...`);
+//             const startTime = Date.now();
+            
+//             // Use HuggingFace Inference API
+//             const response = await hf.chatCompletion({
+//                 model,
+//                 messages: [
+//                     {
+//                         role: "system",
+//                         content: "Output ONLY valid JSON. No markdown, no explanations, just JSON."
+//                     },
+//                     {
+//                         role: "user",
+//                         content: prompt
+//                     }
+//                 ],
+//                 max_tokens: 4096,
+//                 temperature: 0.7,
+//             });
+
+//             const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+//             console.log(`⏱️  Model responded in ${elapsed}s`);
+
+//             const raw = response.choices?.[0]?.message?.content;
+//             if (!raw) {
+//                 throw new Error("Empty response from model");
+//             }
+
+//             console.log("📄 Parsing response...");
+//             const parsed = safeParseJson(raw);
+
+
+//             console.log("✅ Valid variant generated");
+//             return parsed;
+
+//         } catch (err) {
+//             const errorMsg = `Model ${model} failed: ${err.message}`;
+//             console.error(`❌ ${errorMsg}`);
+//             errors.push(errorMsg);
+            
+//             // Continue to next model unless it's a timeout
+//             if (err.message.includes('timeout') || err.message.includes('ETIMEDOUT')) {
+//                 break;
+//             }
+//         }
+//     }
+
+//     throw new Error(`All models failed:\n${errors.join('\n')}`);
+// }
+
+// // =========================================================
+// // 1️⃣ GENERATE AI PROBLEM
+// // =========================================================
+// exports.generateAiProblem = async (req, res) => {
+//     try {
+//         const userId = req.user.id || req.user._id || req.user.userId;
+//         const { problemId } = req.params;
+
+//         if (!problemId) {
+//             return res.status(400).json({ message: "Problem ID is required" });
+//         }
+
+//         // Fetch original problem
+//         const original = await SingleProblem.findById(problemId);
+//         if (!original) {
+//             return res.status(404).json({ message: "Original problem not found" });
+//         }
+
+//         console.log(`🚀 Generating AI variant for: ${original.name}`);
+//         console.log(`⏳ This may take 30-90 seconds...`);
+
+//         // Set a longer timeout for this response
+//         req.setTimeout(180000); // 3 minutes
+
+//         // Generate variant
+//         const aiData = await callLLMToGenerateVariant(original);
+
+//         // Save to database
+//         const saved = await AiProblem.create({
+//             originalProblemId: problemId,
+//             createdBy: userId,
+//             acceptedByUser: false,
+//             isPublic: false,
+
+//             problemType: "aiProblem",
+
+//             difficulty: aiData.problem.difficulty || original.difficulty,
+//             name: aiData.problem.name,
+//             description: aiData.problem.description,
+//             input: aiData.problem.input,
+//             output: aiData.problem.output,
+//             note: aiData.problem.note || "",
+//             tags: aiData.problem.tags || original.tags || [],
+//             examples: aiData.problem.examples,
+//             expected_time_complexity: aiData.problem.expected_time_complexity || original.expected_time_complexity,
+//             expected_auxiliary_space: aiData.problem.expected_auxiliary_space || original.expected_auxiliary_space,
+//             time_limit: aiData.problem.time_limit || "1 second",
+//             memory_limit: aiData.problem.memory_limit || "256 MB",
+//             // solutions: aiData.solutions
+//         });
+
+//         console.log(`✅ Saved AI problem: ${saved._id}`);
+
+//         res.status(201).json({
+//             message: "AI variant generated successfully",
+//             problem: saved
+//         });
+
+//     } catch (err) {
+//         console.error("❌ Generation failed:", err);
+        
+//         if (err.message.includes("not found")) {
+//             return res.status(404).json({ message: err.message });
+//         }
+        
+//         if (err.message.includes("timeout") || err.message.includes("ETIMEDOUT")) {
+//             return res.status(504).json({ 
+//                 message: "Request timed out. The AI service is taking too long. Please try again.",
+//                 error: "Gateway timeout"
+//             });
+//         }
+
+//         if (err.message.includes("All models failed")) {
+//             return res.status(503).json({ 
+//                 message: "AI service unavailable. All models failed to respond.",
+//                 error: err.message 
+//             });
+//         }
+
+//         res.status(500).json({ 
+//             message: "Failed to generate AI problem", 
+//             error: err.message 
+//         });
+//     }
+// };
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 const SingleProblem = require("../models/SingleProblem");
 const AiProblem = require("../models/aiProblem");
-const { HfInference } = require("@huggingface/inference");
+require("dotenv").config();
 
-// Initialize HuggingFace Inference Client
+const { HfInference } = require("@huggingface/inference");
 const hf = new HfInference(process.env.HF_TOKEN);
 
-// =========================================================
-// 🔥 Helper: Call LLM to Generate Problem Variant
-// =========================================================
+// ======================================================================
+// 🧠 JSON CLEANER — Never breaks even if model outputs trash
+// ======================================================================
+function cleanJson(raw) {
+    if (!raw) return null;
+
+    let text = raw.trim();
+
+    // Extract <json>...</json>
+    const tagMatch = text.match(/<json>([\s\S]*?)<\/json>/i);
+    if (tagMatch) text = tagMatch[1];
+
+    // Remove fences
+    text = text.replace(/```json|```/gi, "").trim();
+
+    // Normalize quotes
+    text = text
+        .replace(/“|”/g, '"')
+        .replace(/‘|’/g, "'");
+
+    // Fix trailing commas
+    text = text.replace(/,\s*}/g, "}");
+    text = text.replace(/,\s*]/g, "]");
+
+    // Remove stray backslashes
+    text = text.replace(/\\(?=\s*")/g, "");
+
+    try {
+        return JSON.parse(text);
+    } catch (err) {
+        console.log("❌ JSON parse failed after cleaning:", err.message);
+        return null;
+    }
+}
+
+// ======================================================================
+// 🌟 HUGGINGFACE MODEL RUNNER
+// ======================================================================
+async function tryHF(prompt, modelName) {
+    try {
+        console.log(`🤖 Trying HF model: ${modelName}`);
+
+        const response = await hf.chatCompletion({
+            model: modelName,
+            messages: [
+                { role: "system", content: "Return ONLY valid JSON inside <json></json>" },
+                { role: "user", content: prompt }
+            ]
+        });
+
+        const raw = response.choices?.[0]?.message?.content;
+        if (!raw) return null;
+
+        return cleanJson(raw);
+    } catch (err) {
+        console.log(`❌ HF ${modelName} failed:`, err.message);
+        return null;
+    }
+}
+
+// ======================================================================
+// 🌟 MAIN LLM GENERATOR 
+// ======================================================================
 async function callLLMToGenerateVariant(original) {
-    const prompt = `Generate a competitive programming problem variant in valid JSON format.
+    const prompt = `
+Generate a **NEW competitive programming problem variant**.
 
-ORIGINAL:
-Name: ${original.name}
-Difficulty: ${original.difficulty}
-Description: ${original.description.substring(0, 500)}...
-Tags: ${original.tags ? original.tags.join(", ") : "N/A"}
+Return ONLY:
 
-REQUIREMENTS:
-- Same difficulty: ${original.difficulty}
-- Different theme/story
-- Same algorithmic approach
-- NEW examples and test cases
-
-OUTPUT (JSON only, no markdown):
+<json>
 {
   "problem": {
-    "name": "string",
+    "name": "",
     "difficulty": "${original.difficulty}",
-    "description": "string (be concise)",
-    "input": "string",
-    "output": "string",
-    "note": "string",
-    "tags": ["tag1", "tag2"],
-    "examples": [{"input": "...", "output": "...", "explanation": "..."}],
-    "expected_time_complexity": "O(...)",
-    "expected_auxiliary_space": "O(...)",
+    "description": "",
+    "input": "",
+    "output": "",
+    "note": "",
+    "tags": [],
+    "examples": [
+      {"input": "", "output": "", "explanation": ""}
+    ],
+    "expected_time_complexity": "",
+    "expected_auxiliary_space": "",
     "time_limit": "1 second",
     "memory_limit": "256 MB"
   }
-}`;
+}
+</json>
 
-/*
+✓ Different story/theme  
+✓ Same difficulty (${original.difficulty})  
+✓ Same algorithmic concept  
+✓ ALL EXAMPLES MUST BE SELF-VERIFIED EXACTLY  
 
-- 4 solutions (Python, JavaScript, Java, C++)
+---
 
-,
-  "solutions": [
-    {"language": "python", "code": "# solution"},
-    {"language": "javascript", "code": "// solution"},
-    {"language": "java", "code": "// solution"},
-    {"language": "cpp", "code": "// solution"}
-  ]
+ORIGINAL:
+Name: ${original.name}
+Description: ${original.description.substring(0, 300)}...
+Tags: ${original.tags?.join(", ") || "None"}
+`;
 
-*/
-
-    function safeParseJson(raw) {
-        let cleaned = raw.trim();
-        // Remove markdown blocks
-        cleaned = cleaned.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '');
-        cleaned = cleaned.trim();
-        
-        try {
-            return JSON.parse(cleaned);
-        } catch (e) {
-            throw new Error(`JSON parse failed: ${e.message}`);
-        }
-    }
-
-    // Models to try (smaller first for speed)
+    // HuggingFace model fallback chain
     const models = [
         "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
         "Qwen/Qwen2.5-7B-Instruct",
-        "Qwen/Qwen2.5-72B-Instruct",
+        "Qwen/Qwen2.5-72B-Instruct"
     ];
 
-    const errors = [];
-
-    for (const model of models) {
-        try {
-            console.log(`🤖 Trying model: ${model}...`);
-            const startTime = Date.now();
-            
-            // Use HuggingFace Inference API
-            const response = await hf.chatCompletion({
-                model,
-                messages: [
-                    {
-                        role: "system",
-                        content: "Output ONLY valid JSON. No markdown, no explanations, just JSON."
-                    },
-                    {
-                        role: "user",
-                        content: prompt
-                    }
-                ],
-                max_tokens: 4096,
-                temperature: 0.7,
-            });
-
-            const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
-            console.log(`⏱️  Model responded in ${elapsed}s`);
-
-            const raw = response.choices?.[0]?.message?.content;
-            if (!raw) {
-                throw new Error("Empty response from model");
-            }
-
-            console.log("📄 Parsing response...");
-            const parsed = safeParseJson(raw);
-
-            // Quick validation
-            // if (!parsed.problem?.name || !parsed.solutions?.length) {
-            //     throw new Error("Invalid response structure");
-            // }
-
-            // if (!Array.isArray(parsed.problem.examples) || parsed.problem.examples.length === 0) {
-            //     throw new Error("No examples provided");
-            // }
-
-            // const requiredLangs = ["python", "javascript", "java", "cpp"];
-            // const providedLangs = parsed.solutions.map(s => s.language?.toLowerCase());
-            
-            // for (const lang of requiredLangs) {
-            //     if (!providedLangs.includes(lang)) {
-            //         throw new Error(`Missing ${lang} solution`);
-            //     }
-            // }
-
-            // // Check for empty solutions
-            // for (const sol of parsed.solutions) {
-            //     if (!sol.code?.trim()) {
-            //         throw new Error(`Empty code for ${sol.language}`);
-            //     }
-            // }
-
-            console.log("✅ Valid variant generated");
-            return parsed;
-
-        } catch (err) {
-            const errorMsg = `Model ${model} failed: ${err.message}`;
-            console.error(`❌ ${errorMsg}`);
-            errors.push(errorMsg);
-            
-            // Continue to next model unless it's a timeout
-            if (err.message.includes('timeout') || err.message.includes('ETIMEDOUT')) {
-                break;
-            }
-        }
+    for (const m of models) {
+        const res = await tryHF(prompt, m);
+        if (res?.problem) return res;
     }
 
-    throw new Error(`All models failed:\n${errors.join('\n')}`);
+    throw new Error("All models failed to generate valid JSON.");
 }
 
-// =========================================================
-// 1️⃣ GENERATE AI PROBLEM
-// =========================================================
+// ======================================================================
+// 🚀 API ROUTE: Generate AI Variant
+// ======================================================================
 exports.generateAiProblem = async (req, res) => {
     try {
-        const userId = req.user.id || req.user._id || req.user.userId;
+        const userId = req.user.id || req.user._id;
         const { problemId } = req.params;
 
-        if (!problemId) {
+        if (!problemId)
             return res.status(400).json({ message: "Problem ID is required" });
-        }
 
-        // Fetch original problem
         const original = await SingleProblem.findById(problemId);
-        if (!original) {
+        if (!original)
             return res.status(404).json({ message: "Original problem not found" });
-        }
 
         console.log(`🚀 Generating AI variant for: ${original.name}`);
-        console.log(`⏳ This may take 30-90 seconds...`);
+        req.setTimeout(180000);
 
-        // Set a longer timeout for this response
-        req.setTimeout(180000); // 3 minutes
-
-        // Generate variant
+        // CALL LLM (HuggingFace only)
         const aiData = await callLLMToGenerateVariant(original);
+        const p = aiData.problem;
 
-        // Save to database
+        // Save to DB
         const saved = await AiProblem.create({
             originalProblemId: problemId,
             createdBy: userId,
             acceptedByUser: false,
             isPublic: false,
-            difficulty: aiData.problem.difficulty || original.difficulty,
-            name: aiData.problem.name,
-            description: aiData.problem.description,
-            input: aiData.problem.input,
-            output: aiData.problem.output,
-            note: aiData.problem.note || "",
-            tags: aiData.problem.tags || original.tags || [],
-            examples: aiData.problem.examples,
-            expected_time_complexity: aiData.problem.expected_time_complexity || original.expected_time_complexity,
-            expected_auxiliary_space: aiData.problem.expected_auxiliary_space || original.expected_auxiliary_space,
-            time_limit: aiData.problem.time_limit || "1 second",
-            memory_limit: aiData.problem.memory_limit || "256 MB",
-            // solutions: aiData.solutions
+
+            problemType: "aiProblem",
+
+            difficulty: p.difficulty,
+            name: p.name,
+            description: p.description,
+            input: p.input,
+            output: p.output,
+            note: p.note || "",
+            tags: p.tags || [],
+            examples: p.examples,
+            expected_time_complexity: p.expected_time_complexity,
+            expected_auxiliary_space: p.expected_auxiliary_space,
+            time_limit: p.time_limit,
+            memory_limit: p.memory_limit,
         });
 
-        console.log(`✅ Saved AI problem: ${saved._id}`);
-
         res.status(201).json({
-            message: "AI variant generated successfully",
+            message: "AI problem generated successfully",
             problem: saved
         });
 
     } catch (err) {
         console.error("❌ Generation failed:", err);
-        
-        if (err.message.includes("not found")) {
-            return res.status(404).json({ message: err.message });
-        }
-        
-        if (err.message.includes("timeout") || err.message.includes("ETIMEDOUT")) {
-            return res.status(504).json({ 
-                message: "Request timed out. The AI service is taking too long. Please try again.",
-                error: "Gateway timeout"
-            });
-        }
-
-        if (err.message.includes("All models failed")) {
-            return res.status(503).json({ 
-                message: "AI service unavailable. All models failed to respond.",
-                error: err.message 
-            });
-        }
-
-        res.status(500).json({ 
-            message: "Failed to generate AI problem", 
-            error: err.message 
+        res.status(500).json({
+            message: "Generation failed",
+            error: err.message
         });
     }
 };
+
+
+
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 // =========================================================
 // 2️⃣ ACCEPT AI PROBLEM
