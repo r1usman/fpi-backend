@@ -12,6 +12,7 @@ async function createCourse(req, res) {
     if (!instructorDoc)
       return res.status(404).json({ error: "Instructor not found" });
     const course = await Course.create({
+      title,
       instructorId,
       instructor: instructorDoc.name,
 
