@@ -88,7 +88,7 @@ route.post("/", async (req, res) => {
         } else if (url.includes("geeksforgeeks")) {
             mainContent = $(".entry-content, .content, article").first();
         } else {
-            mainContent = $("body").first(); // fallback
+            mainContent = $("body").first();
         }
 
         const contentBlocks = [];
@@ -138,5 +138,6 @@ route.get("/preview", async (req, res) => {
         res.status(500).send(`<p style="color:red">Error loading preview.</p>`);
     }
 });
+
 
 module.exports = route;
