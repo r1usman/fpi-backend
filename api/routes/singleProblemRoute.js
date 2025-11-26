@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const problemController = require('../controllers/singleProblemController');
 
-const { Protect } = require('../Middleware/AuthMiddleware');
+const { Protect } = require('../utils/Token');
 const { adminAccess } = require('../Middleware/AdminAccess');
 
 // ============================================

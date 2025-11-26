@@ -9,6 +9,7 @@ const {
   listCoursesByInstructor,
   setCourseLiveTrue,
   setCourseLiveFalse,
+  listCoursesByStudent,
 } = require("../controllers/courseController");
 const { getResources, upload } = require("./resource/rec");
 const { Protect } = require("../utils/Token");
@@ -19,13 +20,14 @@ const courseRouter = express.Router();
 
 // Specific routes should come before parameter
 // ized routes
-courseRouter.post("/", createCourse);
+courseRouter.post("/", Protect, createCourse);
 courseRouter.get("/", listCourses);
 courseRouter.get("/students", listStudents);
 courseRouter.post("/upload", upload.single("file"), getResources);
 // courseRouter.post("/cluster", getQueries);
 courseRouter.post("/cluster", handleDedupe);
 courseRouter.get("/instructor", Protect, listCoursesByInstructor);
+courseRouter.get("/joined", Protect, listCoursesByStudent);
 courseRouter.post("/add-student/:courseId", addStudentToCourse);
 courseRouter.post("/join/:courseId", joinCourse);
 courseRouter.post("/:courseId/live/start", setCourseLiveTrue);

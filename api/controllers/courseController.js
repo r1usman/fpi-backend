@@ -116,7 +116,7 @@ async function listCoursesByInstructor(req, res) {
       path: "studentIds",
       select: "name status",
     });
-
+    console.log(courses);
     res.json(courses);
   } catch (err) {
     console.error(err);
@@ -161,6 +161,22 @@ async function setCourseLiveFalse(req, res) {
   }
 }
 
+async function listCoursesByStudent(req, res) {
+  try {
+    const studentId = (req.user && req.user._id) || req.params.studentId || req.query.studentId;
+    if (!studentId) {
+      return res.status(400).json({ error: "Missing studentId" });
+    }
+    const courses = await Course.find({ studentIds: studentId }).populate({
+      path: "studentIds",
+      select: "name status",
+    });
+    res.json(courses);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to list courses for student" });
+  }
+}
+
 module.exports = {
   createCourse,
   getCourse,
@@ -171,4 +187,5 @@ module.exports = {
   listStudents,
   setCourseLiveTrue,
   setCourseLiveFalse,
+  listCoursesByStudent,
 };
