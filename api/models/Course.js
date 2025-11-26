@@ -10,6 +10,7 @@ const courseSchema = new Schema(
     description: { type: String, required: true, trim: true },
     studentIds: [{ type: Types.ObjectId, ref: "User" }],
     image: { type: String, required: true, trim: true },
+    live: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

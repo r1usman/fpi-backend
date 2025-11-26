@@ -45,6 +45,12 @@ const aiProblemSchema = new mongoose.Schema({
   note: String,
   
   examples: [exampleSchema],
+
+  problemType: {
+    type: String,
+    enum: ['Problem', 'aiProblem'],
+    default: 'Problem'
+  },
   
   // ================== Metadata ==================
   generatedAt: {

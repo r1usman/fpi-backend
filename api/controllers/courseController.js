@@ -28,8 +28,8 @@ async function createCourse(req, res) {
 async function getCourse(req, res) {
   try {
     const course = await Course.findById(req.params.courseId).populate({
-      path: 'studentIds',
-      select: 'name status'
+      path: "studentIds",
+      select: "name status",
     });
     if (!course) return res.status(404).json({ error: "Course not found" });
     res.json(course);
@@ -47,7 +47,6 @@ async function listCourses(req, res) {
   }
 }
 
-
 async function SpecificCourses(req, res) {
   try {
     const courses = await Course.find({});
@@ -56,8 +55,6 @@ async function SpecificCourses(req, res) {
     res.status(500).json({ error: "Failed to list courses" });
   }
 }
-
-
 
 async function addStudentToCourse(req, res) {
   try {
@@ -115,21 +112,17 @@ async function listCoursesByInstructor(req, res) {
       return res.status(404).json({ error: "Instructor not found" });
     }
 
-
     const courses = await Course.find({ instructorId: req.user._id }).populate({
-      path: 'studentIds',
-      select: 'name status'
+      path: "studentIds",
+      select: "name status",
     });
-
+    console.log(courses);
     res.json(courses);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to list courses for instructor" });
   }
 }
-
-
-
 
 async function listStudents(req, res) {
   try {
@@ -140,6 +133,49 @@ async function listStudents(req, res) {
   }
 }
 
+async function setCourseLiveTrue(req, res) {
+  try {
+    const course = await Course.findById(req.params.courseId);
+    if (!course) return res.status(404).json({ error: "Course not found" });
+    if (!course.live) {
+      course.live = true;
+      await course.save();
+    }
+    res.json(course);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to set course live" });
+  }
+}
+
+async function setCourseLiveFalse(req, res) {
+  try {
+    const course = await Course.findById(req.params.courseId);
+    if (!course) return res.status(404).json({ error: "Course not found" });
+    if (course.live) {
+      course.live = false;
+      await course.save();
+    }
+    res.json(course);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to unset course live" });
+  }
+}
+
+async function listCoursesByStudent(req, res) {
+  try {
+    const studentId = (req.user && req.user._id) || req.params.studentId || req.query.studentId;
+    if (!studentId) {
+      return res.status(400).json({ error: "Missing studentId" });
+    }
+    const courses = await Course.find({ studentIds: studentId }).populate({
+      path: "studentIds",
+      select: "name status",
+    });
+    res.json(courses);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to list courses for student" });
+  }
+}
 
 module.exports = {
   createCourse,
@@ -149,4 +185,7 @@ module.exports = {
   addStudentToCourse,
   joinCourse,
   listStudents,
+  setCourseLiveTrue,
+  setCourseLiveFalse,
+  listCoursesByStudent,
 };
