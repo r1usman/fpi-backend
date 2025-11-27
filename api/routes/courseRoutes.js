@@ -10,6 +10,8 @@ const {
   setCourseLiveTrue,
   setCourseLiveFalse,
   listCoursesByStudent,
+  listCoursesNotJoined,
+  listPopularCourses,
 } = require("../controllers/courseController");
 const { getResources, upload } = require("./resource/rec");
 const { Protect } = require("../utils/Token");
@@ -28,6 +30,8 @@ courseRouter.post("/upload", upload.single("file"), getResources);
 courseRouter.post("/cluster", handleDedupe);
 courseRouter.get("/instructor", Protect, listCoursesByInstructor);
 courseRouter.get("/joined", Protect, listCoursesByStudent);
+courseRouter.get("/not-joined", Protect, listCoursesNotJoined);
+courseRouter.get("/popular", listPopularCourses);
 courseRouter.post("/add-student/:courseId", addStudentToCourse);
 courseRouter.post("/join/:courseId", joinCourse);
 courseRouter.post("/:courseId/live/start", setCourseLiveTrue);

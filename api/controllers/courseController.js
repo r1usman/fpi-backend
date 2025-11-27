@@ -1,5 +1,6 @@
 const { Course } = require("../models/Course.js");
 const User = require("../models/user.model.js");
+const BlogPost = require("../models/Blog_Schema.js");
 
 async function createCourse(req, res) {
   try {
@@ -40,16 +41,40 @@ async function getCourse(req, res) {
 
 async function listCourses(req, res) {
   try {
-    const courses = await Course.find();
-    res.json(courses);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to list courses" });
-  }
-}
-
-async function SpecificCourses(req, res) {
-  try {
-    const courses = await Course.find({});
+    const courses = await Course.aggregate([
+      // Join blog posts belonging to this course
+      {
+        $lookup: {
+          from: "blogposts",
+          localField: "_id",
+          foreignField: "BelongTo",
+          as: "posts",
+        },
+      },
+      // Compute totals: views sum and likes (likedBy length) sum
+      {
+        $addFields: {
+          totalViews: { $sum: { $ifNull: ["$posts.views", []] } },
+          totalLikes: {
+            $sum: {
+              $map: {
+                input: { $ifNull: ["$posts", []] },
+                as: "p",
+                in: { $size: { $ifNull: ["$$p.likedBy", []] } },
+              },
+            },
+          },
+        },
+      },
+      // Sort by totalLikes descending
+      { $sort: { totalLikes: -1 } },
+      // Optionally exclude posts array from output
+      {
+        $project: {
+          posts: 0,
+        },
+      },
+    ]);
     res.json(courses);
   } catch (err) {
     res.status(500).json({ error: "Failed to list courses" });
@@ -177,6 +202,87 @@ async function listCoursesByStudent(req, res) {
   }
 }
 
+async function listCoursesNotJoined(req, res) {
+  try {
+    const studentId =
+      (req.user && req.user._id) || req.params.studentId || req.query.studentId;
+    if (!studentId) {
+      return res.status(400).json({ error: "Missing studentId" });
+    }
+    const courses = await Course.find({
+      studentIds: { $nin: [studentId] },
+    });
+    res.json(courses);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Failed to list unjoined courses for student" });
+  }
+}
+
+async function listPopularCourses(req, res) {
+  try {
+    const agg = await BlogPost.aggregate([
+      // Only posts linked to a course
+      { $match: { BelongTo: { $ne: null } } },
+      // compute likes count per post
+      { $addFields: { likesCount: { $size: { $ifNull: ["$likedBy", []] } } } },
+      // group by course id
+      {
+        $group: {
+          _id: "$BelongTo",
+          totalViews: { $sum: { $ifNull: ["$views", 0] } },
+          totalLikes: { $sum: "$likesCount" },
+          posts: { $sum: 1 },
+        },
+      },
+      // join course details
+      {
+        $lookup: {
+          from: "courses",
+          localField: "_id",
+          foreignField: "_id",
+          as: "course",
+        },
+      },
+      { $unwind: "$course" },
+      // compute popularity score (views primary, likes secondary)
+      {
+        $addFields: {
+          popularityScore: {
+            $add: ["$totalViews", { $multiply: ["$totalLikes", 10] }],
+          },
+        },
+      },
+      // sort by views desc then likes desc
+      // { $sort: { totalViews: -1, totalLikes: -1 } },
+      { $sort: { totalLikes: -1 } },
+      // limit to top 2
+      { $limit: 2 },
+      // final shape
+      {
+        $project: {
+          _id: 0,
+          courseId: "$_id",
+          title: "$course.title",
+          description: "$course.description",
+          instructor: "$course.instructor",
+          image: "$course.image",
+          totalViews: 1,
+          totalLikes: 1,
+          posts: 1,
+          popularityScore: 1,
+        },
+      },
+    ]);
+
+    return res.json(agg);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Failed to fetch popular courses" });
+  }
+}
+
 module.exports = {
   createCourse,
   getCourse,
@@ -188,4 +294,6 @@ module.exports = {
   setCourseLiveTrue,
   setCourseLiveFalse,
   listCoursesByStudent,
+  listCoursesNotJoined,
+  listPopularCourses,
 };
