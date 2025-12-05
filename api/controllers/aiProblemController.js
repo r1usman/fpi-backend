@@ -1,328 +1,3 @@
-// const SingleProblem = require("../models/SingleProblem");
-// const AiProblem = require("../models/aiProblem");
-// require("dotenv").config();
-
-// const { HfInference } = require("@huggingface/inference");
-// const hf = new HfInference(process.env.HF_TOKEN);
-
-// // ======================================================================
-// // 🧠 JSON CLEANER — Never breaks even if model outputs trash
-// // ======================================================================
-// function cleanJson(raw) {
-//     if (!raw) return null;
-
-//     let text = raw.trim();
-
-//     // Extract <json>...</json>
-//     const tagMatch = text.match(/<json>([\s\S]*?)<\/json>/i);
-//     if (tagMatch) text = tagMatch[1];
-
-//     // Remove fences
-//     text = text.replace(/```json|```/gi, "").trim();
-
-//     // Normalize quotes
-//     text = text
-//         .replace(/“|”/g, '"')
-//         .replace(/‘|’/g, "'");
-
-//     // Fix trailing commas
-//     text = text.replace(/,\s*}/g, "}");
-//     text = text.replace(/,\s*]/g, "]");
-
-//     // Remove stray backslashes
-//     text = text.replace(/\\(?=\s*")/g, "");
-
-//     try {
-//         return JSON.parse(text);
-//     } catch (err) {
-//         console.log("❌ JSON parse failed after cleaning:", err.message);
-//         return null;
-//     }
-// }
-
-// // ======================================================================
-// // 🌟 HUGGINGFACE MODEL RUNNER
-// // ======================================================================
-// async function tryHF(prompt, modelName) {
-//     try {
-//         console.log(`🤖 Trying HF model: ${modelName}`);
-
-//         const response = await hf.chatCompletion({
-//             model: modelName,
-//             messages: [
-//                 { role: "system", content: "Return ONLY valid JSON inside <json></json>" },
-//                 { role: "user", content: prompt }
-//             ]
-//         });
-
-//         const raw = response.choices?.[0]?.message?.content;
-//         if (!raw) return null;
-
-//         return cleanJson(raw);
-//     } catch (err) {
-//         console.log(`❌ HF ${modelName} failed:`, err.message);
-//         return null;
-//     }
-// }
-
-// // ======================================================================
-// // 🌟 MAIN LLM GENERATOR 
-// // ======================================================================
-// async function callLLMToGenerateVariant(original) {
-//     const prompt = `
-// Generate a **NEW competitive programming problem variant**.
-
-// Return ONLY:
-
-// <json>
-// {
-//   "problem": {
-//     "name": "",
-//     "difficulty": "${original.difficulty}",
-//     "description": "",
-//     "input": "",
-//     "output": "",
-//     "note": "",
-//     "tags": [],
-//     "examples": [
-//       {"input": "", "output": "", "explanation": ""}
-//     ],
-//     "expected_time_complexity": "",
-//     "expected_auxiliary_space": "",
-//     "time_limit": "1 second",
-//     "memory_limit": "256 MB"
-//   }
-// }
-// </json>
-
-// ✓ Different story/theme  
-// ✓ Same difficulty (${original.difficulty})  
-// ✓ Same algorithmic concept  
-// ✓ ALL EXAMPLES MUST BE SELF-VERIFIED EXACTLY  
-
-// ---
-
-// ORIGINAL:
-// Name: ${original.name}
-// Description: ${original.description.substring(0, 300)}...
-// Tags: ${original.tags?.join(", ") || "None"}
-// `;
-
-//     // HuggingFace model fallback chain
-//     const models = [
-//         "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
-//         "Qwen/Qwen2.5-7B-Instruct",
-//         "Qwen/Qwen2.5-72B-Instruct"
-//     ];
-
-//     for (const m of models) {
-//         const res = await tryHF(prompt, m);
-//         if (res?.problem) return res;
-//     }
-
-//     throw new Error("All models failed to generate valid JSON.");
-// }
-
-// // ======================================================================
-// // 🚀 API ROUTE: Generate AI Variant
-// // ======================================================================
-// exports.generateAiProblem = async (req, res) => {
-//     try {
-//         const userId = req.user.id || req.user._id;
-//         const { problemId } = req.params;
-
-//         if (!problemId)
-//             return res.status(400).json({ message: "Problem ID is required" });
-
-//         const original = await SingleProblem.findById(problemId);
-//         if (!original)
-//             return res.status(404).json({ message: "Original problem not found" });
-
-//         console.log(`🚀 Generating AI variant for: ${original.name}`);
-//         req.setTimeout(180000);
-
-//         // CALL LLM (HuggingFace only)
-//         const aiData = await callLLMToGenerateVariant(original);
-//         const p = aiData.problem;
-
-//         // Save to DB
-//         const saved = await AiProblem.create({
-//             originalProblemId: problemId,
-//             createdBy: userId,
-//             acceptedByUser: false,
-//             isPublic: false,
-
-//             problemType: "aiProblem",
-
-//             difficulty: p.difficulty,
-//             name: p.name,
-//             description: p.description,
-//             input: p.input,
-//             output: p.output,
-//             note: p.note || "",
-//             tags: p.tags || [],
-//             examples: p.examples,
-//             expected_time_complexity: p.expected_time_complexity,
-//             expected_auxiliary_space: p.expected_auxiliary_space,
-//             time_limit: p.time_limit,
-//             memory_limit: p.memory_limit,
-//         });
-
-//         res.status(201).json({
-//             message: "AI problem generated successfully",
-//             problem: saved
-//         });
-
-//     } catch (err) {
-//         console.error("❌ Generation failed:", err);
-//         res.status(500).json({
-//             message: "Generation failed",
-//             error: err.message
-//         });
-//     }
-// };
-
-
-
-
-// // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-// // =========================================================
-// // 2️⃣ ACCEPT AI PROBLEM
-// // =========================================================
-// exports.acceptAiProblem = async (req, res) => {
-//     try {
-//         const { problemId } = req.params;
-
-//         console.log(`👍 Accepting AI problem: ${problemId}`);
-
-//         // const updated = await AiProblem.findByIdAndUpdate(
-//         //     problemId,
-//         //     { acceptedByUser: true, isPublic: false },
-//         //     { new: true }
-//         // );
-
-//         // want to update it other way
-//         const problem = await AiProblem.findById(problemId);
-//         problem.acceptedByUser = true;
-
-//         // if (!updated) {
-//         //     return res.status(404).json({ message: "AI Problem not found" });
-//         // }
-
-//         res.json({ message: "AI Problem accepted", problem: problem });
-
-//     } catch (err) {
-//         res.status(500).json({ message: "Server Error", error: err.message });
-//     }
-// };
-
-// // =========================================================
-// // 3️⃣ DELETE AI PROBLEM / REJECT AI PROBLEM
-// // =========================================================
-// exports.deleteAiProblem = async (req, res) => {
-//     try {
-//         const { problemId } = req.params;
-
-//         const problem = await AiProblem.findById(problemId);
-
-//         if (!problem) {
-//             return res.status(404).json({ message: "AI Problem not found" });
-//         }
-
-//         // Fix: Use req.user._id
-//         if (!req.user || !req.user._id) {
-//             return res.status(403).json({ message: "No user in request" });
-//         }
-
-//         if (problem.createdBy.toString() !== req.user._id.toString()) {
-//             return res.status(403).json({ message: "Not authorized" });
-//         }
-
-//         await problem.deleteOne();
-
-//         res.json({ message: "AI Problem deleted successfully" });
-
-//     } catch (err) {
-//         res.status(500).json({ message: "Server Error", error: err.message });
-//     }
-// };
-
-
-// // =========================================================
-// // 4️⃣ GET ALL AI PROBLEMS
-// // =========================================================
-// exports.getAllAiProblems = async (req, res) => {
-//     try {
-//         const userId = req.user.id || req.user._id || req.user.userId;
-
-//         const problems = await AiProblem.find({
-//             $or: [
-//                 { isPublic: false },
-//                 { createdBy: userId }
-//             ]
-//         }); // .populate("originalProblemId")
-
-//         res.json({
-//             message: "AI problems fetched successfully",
-//             problems
-//         });
-
-//     } catch (err) {
-//         res.status(500).json({ message: "Server Error", error: err.message });
-//     }
-// };
-
-// // =========================================================
-// // 5️⃣ GET SINGLE AI PROBLEM
-// // =========================================================
-// exports.getAiProblemById = async (req, res) => {
-//     try {
-//         const { problemId } = req.params;
-
-//         console.log(`🔍 Fetching AI problem: ${problemId}`);
-
-//         const problem = await AiProblem.findById(problemId);
-//         if (!problem) {
-//             return res.status(404).json({ message: "AI problem not found" });
-//         }
-
-//         res.status(200).json({
-//             message: "AI problem fetched successfully",
-//             problem
-//         });
-//     } catch (err) {
-//         res.status(500).json({ message: "Failed to fetch AI problem", error: err.message });
-//     }
-// }
-
-
-// =========================================================
-// =========================================================
-
-/*
-(1)
-ON Problem Compare Page
-if (accept) = continue && save
-if (not accept) = discard && delete from db
-
-(2)
-Get all ai problems created by user on user profile
-
-(3)
-Get single ai problem by id
-*/
-
-// ========================================================
-// ========================================================
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-// =========================================================
-// aiProblemController.js (FINAL FIXED VERSION)
-// =========================================================
-
 const SingleProblem = require("../models/SingleProblem");
 const AiProblem = require("../models/aiProblem");
 require("dotenv").config();
@@ -424,23 +99,76 @@ async function tryHF(prompt, modelName) {
 // 🔥 4. MAIN LLM GENERATION FUNCTION
 // ======================================================================
 async function callLLMToGenerateVariant(original) {
-    const prompt = `
+//     const prompt = `
+// You MUST follow a 2-stage generation process:
+
+// STAGE 1 — INTERNAL REASONING (do NOT output JSON)
+// - add prefix or postfix to original problem name to differentiate it
+// - Different story/theme, make sure this accurately defines a NEW problem.
+// - Think step-by-step.
+// - Construct the problem.
+// - Generate examples.
+// - Verify examples by hand.
+// - Re-check logic and constraints.
+// - Confirm that all samples match the rules.
+
+// DO NOT output the reasoning.
+
+// STAGE 2 — OUTPUT JSON (in <json></json>)
+// Return ONLY valid JSON.
+
+// <json>
+// {
+//    "problem": {
+//       "name": "",
+//       "difficulty": "${original.difficulty}",
+//       "description": "",
+//       "input": "",
+//       "output": "",
+//       "note": "",
+//       "tags": [],
+//       "examples": [
+//          {"input": "", "output": "", "explanation": ""}
+//       ],
+//       "expected_time_complexity": "",
+//       "expected_auxiliary_space": "",
+//       "time_limit": "1 second",
+//       "memory_limit": "256 MB"
+//    }
+// }
+// </json>
+
+// RULES:
+// - ALL examples must be manually checked in STAGE 1.
+// - NO contradictions.
+// - NO impossible outputs.
+// - No reuse of original examples.
+// - Must be mathematically sound.
+
+
+// Original Problem:
+// ${original.name}
+// ${original.description.substring(0, 300)}...
+// Tags: ${original.tags?.join(", ") || "None"}
+// `;
+
+prompt = `
 You MUST follow a 2-stage generation process:
 
-STAGE 1 — INTERNAL REASONING (do NOT output JSON)
-- add prefix or postfix to original problem name to differentiate it
-- Different story/theme, make sure this accurately defines a NEW problem.
-- Think step-by-step.
-- Construct the problem.
-- Generate examples.
-- Verify examples by hand.
-- Re-check logic and constraints.
-- Confirm that all samples match the rules.
+STAGE 1 — INTERNAL CHECKING (DO NOT OUTPUT ANY OF THIS)
+- Create a NEW problem based on the original, but with a different theme or story.
+- The new problem MUST have clear, deterministic, mathematically valid rules.
+- DO NOT reuse the original problem’s examples.
+- When designing the new problem, ensure:
+  • Rules are consistent and unambiguous.
+  • Examples follow the rules exactly.
+  • Inputs and outputs are realistic.
+  • No contradictions or exceptions.
+- Test all examples privately and ensure correctness.
+- DO NOT output or reveal any reasoning, thinking, or calculations from Stage 1.
 
-DO NOT output the reasoning.
-
-STAGE 2 — OUTPUT JSON (in <json></json>)
-Return ONLY valid JSON.
+STAGE 2 — OUTPUT JSON ONLY (wrapped in <json></json>)
+Return ONLY valid JSON in the following format:
 
 <json>
 {
@@ -464,18 +192,18 @@ Return ONLY valid JSON.
 </json>
 
 RULES:
-- ALL 2 examples must be manually checked in STAGE 1.
-- NO contradictions.
-- NO impossible outputs.
-- No reuse of original examples.
-- Must be mathematically sound.
-
+- The new problem must be mathematically sound.
+- All examples must be correct and manually verified internally.
+- No contradictions or ambiguous rules.
+- Do NOT output any chain-of-thought.
+- Only output JSON in Stage 2.
 
 Original Problem:
 ${original.name}
 ${original.description.substring(0, 300)}...
 Tags: ${original.tags?.join(", ") || "None"}
-`;
+
+`
 
     // const models = [
     //     "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
@@ -493,6 +221,10 @@ Tags: ${original.tags?.join(", ") || "None"}
 // ];
 
     const models = [
+  "Qwen/Qwen3-VL-235B-A22B-Thinking:novita",
+  "moonshotai/Kimi-K2-Thinking:novita",
+  
+  
   "meta-llama/Llama-3.3-70B-Instruct:nebius",
   "deepseek-ai/DeepSeek-R1:cerebras",
   "meta-llama/Meta-Llama-3-8B-Instruct:nebius",
@@ -526,32 +258,101 @@ Tags: ${original.tags?.join(", ") || "None"}
 //     return input.trim();
 // }
 
-function sanitizeExampleInput(input) {
-    if (!input) return input;
+// function sanitizeExampleInput(exampleInput) {
+//     let parts = exampleInput.trim().split(/\s+/).map(Number);
 
-    // Remove labels like "Input:" or "Output:"
-    input = input.replace(/^(input:)/i, "");
-    input = input.replace(/^(output:)/i, "");
+//     // Remove the example number prefix (e.g., "1 4" → ["1","4"])
+//     // If first number is count + 1, reduce it
+//     if (parts.length === 2 && parts[0] <= 2 && parts[1] <= 9) {
+//         // Single-digit type
+//         return `${parts[1]}`;
+//     }
 
-    // Remove angle brackets and square brackets
-    input = input.replace(/[\[\]<>]/g, " ");
+//     // --- Array type ---
+//     // If format is like: "4 1 5 10 15"
+//     let n = parts[0];
 
-    // Remove commas → spaces
-    input = input.replace(/,/g, " ");
+//     if (parts.length === n + 1) {
+//         // Already in correct compact format
+//         return `${n}\n${parts.slice(1).join(" ")}`;
+//     }
 
-    // Collapse extra spaces
-    input = input.replace(/\s+/g, " ").trim();
+//     // If input already provided in two lines originally but merged
+//     if (parts.length > 2) {
+//         // Try to recover: first value is n
+//         n = parts[0];
+//         let arr = parts.slice(1, 1 + n);
 
-    // Convert flat list "1 2 3 4" into judge format:
-    // N\nnumbers
-    const parts = input.split(" ").map(n => n.trim()).filter(n => n.length);
+//         return `${n}\n${arr.join(" ")}`;
+//     }
 
-    if (parts.every(p => /^-?\d+$/.test(p))) {
-        const n = parts.length;
-        return `${n}\n${parts.join(" ")}`;
+//     // Fallback → return original
+//     return exampleInput.trim();
+// }
+
+function sanitizeExampleInput(exampleInput) {
+    if (!exampleInput) return "";
+
+    // Convert all whitespace to spaces
+    let raw = exampleInput.replace(/\s+/g, " ").trim();
+
+    // Extract all numbers
+    let nums = raw.split(" ").filter(x => x.length > 0 && !isNaN(x)).map(Number);
+
+    if (nums.length === 0) return raw;
+
+    // =============================================================
+    // CASE 1 — SINGLE-DIGIT PROBLEMS
+    // Example formats:
+    // "1 5"
+    // "5"
+    // "1\n5"
+    // =============================================================
+    if (nums.length === 2 && nums[0] <= 5 && nums[1] <= 9) {
+        // first number is example index, second is value
+        return String(nums[1]);
+    }
+    if (nums.length === 1 && nums[0] <= 9) {
+        return String(nums[0]);
     }
 
-    return input;
+    // =============================================================
+    // CASE 2 — TWO-DIGIT PROBLEMS (10–99)
+    // Examples:
+    // "1 14"
+    // "14"
+    // "Example: 2 25"
+    // =============================================================
+    if (nums.length === 2 && nums[1] >= 10 && nums[1] <= 99) {
+        return String(nums[1]);
+    }
+    if (nums.length === 1 && nums[0] >= 10 && nums[0] <= 99) {
+        return String(nums[0]);
+    }
+
+    // =============================================================
+    // CASE 3 — ARRAY PROBLEMS
+    // Examples:
+    // "4 1 5 10 15"
+    // "4\n1 5 10 15"
+    // =============================================================
+    let n = nums[0];
+
+    if (nums.length === n + 1) {
+        // Valid array with length prefix
+        return `${n}\n${nums.slice(1).join(" ")}`;
+    }
+
+    if (nums.length > 2 && nums.length - 1 >= n) {
+        // Attempt to repair broken merge
+        let arr = nums.slice(1, 1 + n);
+        return `${n}\n${arr.join(" ")}`;
+    }
+
+    // =============================================================
+    // FALLBACK → return cleaned integer list as space-separated
+    // =============================================================
+    return nums.join(" ");
 }
 
 
@@ -697,3 +498,10 @@ exports.getAiProblemById = async (req, res) => {
 };
 
 // - Keep the structure of example input and output similar to original problem (like no extra comma addition, or braces etc)
+
+// ========================================================
+// ========================================================
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ========================================================
+// ========================================================
