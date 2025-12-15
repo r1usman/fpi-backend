@@ -2,6 +2,7 @@ const express = require("express")
 
 const route = express.Router();
 const DefaultCourseSchemas = require("../models/CourseCategory_Model");
+const { Protect } = require("../utils/Token")
 const upload = require("../Middleware/uploadMiddleware");
 const path = require("path")
 const fs = require("fs")
